@@ -1,0 +1,2696 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>מערכת הזמנות</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    // This configuration tells Tailwind to use a class selector for dark mode
+    tailwind.config = {
+      darkMode: ['selector', '#agada-order-app.dark'],
+    }
+  </script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;600;700&display=swap" rel="stylesheet" />
+  <style>
+    /* --- Added a unique ID to isolate the app's styles --- */
+    #agada-order-app {
+      --color-primary: #56ab2f;
+      --color-primary-light: #a8e063;
+      --color-primary-faint: #f0f9eb;
+      --color-primary-dark: #428d23;
+
+      --color-background: #f8f9fa;
+      --color-surface: #ffffff;
+
+      --color-text-strong: #333;
+      --color-text-default: #666;
+      --color-text-muted: #6c757d;
+      --color-text-on-primary: #ffffff;
+
+      --color-border: #e9ecef;
+      --color-border-light: #e0e0e0;
+
+      --color-danger: #ef4444;
+
+      --shadow-sm: rgba(0, 0, 0, 0.05);
+      --shadow-primary-lg: rgba(86, 171, 47, 0.1);
+    }
+
+    #agada-order-app.dark {
+      --color-primary: #65c33a;
+      --color-primary-faint: #2a3b25;
+      --color-background: #121212;
+      /* Darker background */
+      --color-surface: #1e1e1e;
+      /* Slightly lighter surface */
+      --color-text-strong: #f9fafb;
+      --color-text-default: #d1d5db;
+      --color-text-muted: #9ca3af;
+      --color-border: #333;
+      --color-border-light: #4b5563;
+      --shadow-sm: rgba(0, 0, 0, 0.2);
+      --shadow-primary-lg: rgba(168, 224, 99, 0.1);
+    }
+
+    .bg-primary-light {
+      background-color: var(--color-primary-faint);
+    }
+
+    .border-m {
+      border-radius: 15px;
+    }
+
+    body {
+      background-color: var(--color-background);
+    }
+
+    #agada-order-app {
+      font-family: "Assistant", sans-serif;
+      background-color: var(--color-background);
+      color: var(--color-text-default);
+      transition: background-color 0.3s, color 0.3s;
+      /* The two properties below control the scroll behavior */
+      scroll-behavior: smooth;
+      scroll-padding-top: 100px;
+      /* <-- This is the property you need to change */
+      overflow-x: clip;
+
+    }
+
+    /* All styles are now prepended with #agada-order-app to increase specificity */
+    #agada-order-app .card {
+      background-color: var(--color-surface);
+      border-radius: 15px;
+      padding: 25px; // No need pading
+      margin-bottom: 25px;
+      box-shadow: 0 4px 15px var(--shadow-sm);
+      border: 1px solid var(--color-border);
+      transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    }
+
+    #agada-order-app .package-card {
+      padding: 0px; // No need pading
+    }
+
+    #agada-order-app .package-card:hover {
+      border-color: var(--color-primary-light);
+      box-shadow: 0 8px 25px var(--shadow-primary-lg);
+      transform: translateY(-5px);
+    }
+
+    #agada-order-app .choice-card {
+      border: 2px solid var(--color-border);
+      background-color: var(--color-background);
+      padding: 1rem;
+      border-radius: 0.75rem;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.3s;
+    }
+
+    #agada-order-app .choice-card:hover {
+      border-color: var(--color-primary-light);
+      background-color: var(--color-surface);
+    }
+
+    #agada-order-app .choice-card.selected {
+      border-color: var(--color-primary);
+      background-color: var(--color-primary-faint);
+      box-shadow: 0 4px 15px var(--shadow-primary-lg);
+    }
+
+    #agada-order-app .screen {
+      display: none;
+      animation: fadeIn 0.5s ease-in-out;
+    }
+
+    #agada-order-app .screen.active {
+      display: flex;
+    }
+
+    #agada-order-app .item-card {
+      border: 2px solid var(--color-border);
+      background-color: var(--color-background);
+      padding: 0.75rem;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+      position: relative;
+      display: flex;
+      justify-content: start;
+      align-items: center;
+      gap: 10px;
+    }
+
+    #agada-order-app .item-card .item-card-icon {
+      width: 40px;
+      height: 40px;
+      background-color: var(--color-primary-faint);
+      border-radius: 8px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-shrink: 0;
+      overflow: hidden;
+    }
+
+    #agada-order-app .item-card .item-card-icon img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    #agada-order-app .item-card.selected {
+      border-color: var(--color-primary);
+      background-color: var(--color-primary-faint);
+    }
+
+    #agada-order-app .item-card.selected::after {
+      content: "✓";
+      position: absolute;
+      top: -10px;
+      left: -10px;
+      background: var(--color-primary);
+      color: var(--color-text-on-primary);
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      font-size: 0.8rem;
+      border: 2px solid var(--color-surface);
+    }
+
+    #agada-order-app .item-card:not(.disabled):hover {
+      border-color: var(--color-primary-light);
+      background: var(--color-surface);
+      transform: translateY(-2px);
+    }
+
+    button {
+      border-color: transparent !important; // override elementor settings
+    }
+
+    #agada-order-app .btn-primary {
+      background: linear-gradient(120deg,
+          var(--color-primary) 0%,
+          var(--color-primary-light) 100%);
+      color: var(--color-text-on-primary);
+      transition: all 0.3s;
+      border: 1px solid transparent;
+    }
+
+    #agada-order-app .btn-primary:hover:not(:disabled) {
+      background: linear-gradient(120deg,
+          var(--color-primary-dark) 0%,
+          var(--color-primary) 100%);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 10px var(--shadow-primary-lg);
+    }
+
+    #agada-order-app .btn-primary:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    #agada-order-app .btn-secondary {
+      background-color: transparent;
+      color: var(--color-text-muted);
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+
+    #agada-order-app .btn-secondary:hover {
+      color: var(--color-text-strong);
+      background-color: var(--color-border);
+    }
+
+    #agada-order-app .btn-reset {
+      background: transparent;
+      color: var(--color-danger);
+      border: none;
+      font-weight: 600;
+      font-size: 0.875rem;
+      cursor: pointer;
+      padding: 0.25rem 0.5rem;
+      border-radius: 0.375rem;
+      transition: background-color 0.2s;
+    }
+
+    #agada-order-app .btn-reset:hover {
+      background-color: rgba(239, 68, 68, 0.1);
+    }
+
+    #agada-order-app .sticky-nav {
+      position: sticky;
+      top: 0px;
+      z-index: 40;
+      background-color: var(--color-surface);
+      box-shadow: 0 2px 4px var(--shadow-sm);
+      transition: background-color 0.3s;
+    }
+
+    #agada-order-app .nav-link {
+      padding: 0.75rem 1rem;
+      border-bottom: 2px solid transparent;
+      transition: all 0.2s ease-in-out;
+      color: var(--color-text-muted);
+      font-weight: 600;
+    }
+
+    #agada-order-app .nav-link.active,
+    #agada-order-app .nav-link:hover {
+      color: var(--color-primary);
+      border-bottom-color: var(--color-primary);
+    }
+
+    #agada-order-app .quantity-selector button {
+      transition: transform 0.2s;
+    }
+
+    #agada-order-app .quantity-selector button:hover {
+      transform: scale(1.1);
+    }
+
+    #agada-order-app .date-choice-btn {
+      padding: 0.5rem 1rem;
+      border-radius: 9999px;
+      border: 2px solid var(--color-border);
+      background-color: var(--color-border);
+      color: var(--color-text-default);
+      cursor: pointer;
+      transition: all 0.2s;
+      font-weight: 600;
+      flex-grow: 1;
+      text-align: center;
+    }
+
+    #agada-order-app .date-choice-btn:hover {
+      border-color: var(--color-primary-light);
+      background-color: var(--color-background);
+    }
+
+    #agada-order-app .date-choice-btn.selected {
+      background: var(--color-primary);
+      color: var(--color-text-on-primary);
+      border-color: var(--color-primary);
+    }
+
+    #agada-order-app .section-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--color-text-strong);
+      padding-bottom: 0.5rem;
+      margin-bottom: 1rem;
+      border-bottom: 2px solid var(--color-primary);
+    }
+
+    /* Mobile Summary Modal Styles */
+    #agada-order-app .mobile-summary-modal {
+      transition: opacity 0.3s ease-in-out;
+    }
+
+    #agada-order-app .mobile-summary-modal.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    #agada-order-app .mobile-summary-panel {
+      background-color: var(--color-surface);
+      transition: transform 0.3s ease-in-out;
+    }
+
+    #agada-order-app .mobile-summary-modal.active .mobile-summary-panel {
+      transform: translateY(0);
+    }
+
+    #agada-order-app .mobile-modal-close-btn {
+      background-color: var(--color-border);
+      color: var(--color-text-muted);
+    }
+
+    #agada-order-app .btn-whatsapp {
+      background-color: #25d366;
+      transition: all 0.3s;
+    }
+
+    #agada-order-app .btn-whatsapp:hover {
+      background-color: #128C7E;
+      /* Darker WhatsApp Green */
+      transform: translateY(-2px);
+      box-shadow: 0 4px 10px rgba(37, 211, 102, 0.2);
+    }
+
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    #agada-order-app ::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    #agada-order-app ::-webkit-scrollbar-track {
+      background: var(--color-background);
+    }
+
+    #agada-order-app ::-webkit-scrollbar-thumb {
+      background: var(--color-border);
+      border-radius: 10px;
+    }
+
+    /* Resetting some base styles that might be inherited from the parent site */
+    #agada-order-app,
+    #agada-order-app div,
+    #agada-order-app span,
+    #agada-order-app h1,
+    #agada-order-app h2,
+    #agada-order-app h3,
+    #agada-order-app p,
+    #agada-order-app a,
+    #agada-order-app button,
+    #agada-order-app input,
+    #agada-order-app textarea,
+    #agada-order-app ul,
+    #agada-order-app li {
+      box-sizing: border-box;
+    }
+  </style>
+</head>
+
+<body class="antialiased">
+  <!-- The entire app is now wrapped in a unique container -->
+  <div id="agada-order-app">
+    <!-- Main Application Header -->
+    <header class="p-4 shadow-md z-50 flex" style="background-color: var(--color-surface)" id="agada-order-app-header">
+      <div class="container mx-auto flex justify-between items-center max-w-7xl">
+        <div class="flex items-center gap-3">
+          <a href="https://www.agada-c.co.il/" class="flex items-center gap-3">
+            <img src="https://www.agada-c.co.il/wp-content/uploads/2022/05/Untitled-2-1.png" alt="לוגו קייטרינג אגדה"
+              class="!h-12" />
+            <h1 class="text-2xl font-bold" style="color: var(--color-text-strong)">
+              קייטרינג אגדה
+            </h1>
+          </a>
+        </div>
+        <div class="flex items-center gap-4">
+
+
+        </div>
+        <div class="p-2">
+          <button id="theme-toggle" class="!p-0 rounded-full !w-10 !h-10 flex items-center justify-center"
+            style="background-color: var(--color-border)">
+            <svg id="Moon" width="24" height="24" viewBox="0 0 24 24" fill="none" class="h-5 w-5 hidden dark:flex"
+              xmlns="http://www.w3.org/2000/svg">
+              <path fill-rule="evenodd" clip-rule="evenodd"
+                d="M21.325 12.3462C21.205 12.2422 21.043 12.2002 20.888 12.2362C18.201 12.8342 15.188 11.5442 13.598 9.96117C11.955 8.31317 11.216 5.56117 11.76 3.11217C11.794 2.95717 11.753 2.79517 11.649 2.67517C11.544 2.55517 11.392 2.49417 11.231 2.50517C8.18998 2.75417 5.43298 4.46717 3.85498 7.08917C2.23598 9.78017 2.06298 13.0832 3.38198 16.1522C4.22898 18.1132 5.83498 19.7282 7.78698 20.5812C9.17498 21.1932 10.612 21.4972 12.022 21.4972C13.728 21.4972 15.394 21.0522 16.878 20.1662C19.525 18.5872 21.251 15.8202 21.495 12.7632C21.508 12.6052 21.445 12.4502 21.325 12.3462Z"
+                fill="currentColor"></path>
+            </svg>
+            <svg id="Sun" width="24" height="24" viewBox="0 0 24 24" fill="none" class="h-5 w-5 flex dark:hidden"
+              xmlns="http://www.w3.org/2000/svg">
+              <path fill-rule="evenodd" clip-rule="evenodd"
+                d="M6.57607 7.14051C6.72206 7.28651 6.91506 7.35951 7.10606 7.35951C7.29906 7.35951 7.49007 7.28651 7.63706 7.14051C7.93007 6.84651 7.93007 6.37151 7.63706 6.07851L6.66606 5.10951C6.37306 4.81651 5.89806 4.81751 5.60506 5.10951C5.31206 5.40351 5.31206 5.87751 5.60506 6.17051L6.57607 7.14051Z"
+                fill="currentColor"></path>
+              <path fill-rule="evenodd" clip-rule="evenodd"
+                d="M12.5 5.12C12.914 5.12 13.25 4.784 13.25 4.37V3C13.25 2.586 12.914 2.25 12.5 2.25C12.086 2.25 11.75 2.586 11.75 3V4.37C11.75 4.784 12.086 5.12 12.5 5.12Z"
+                fill="currentColor"></path>
+              <path fill-rule="evenodd" clip-rule="evenodd"
+                d="M5.622 11.9999C5.622 11.5859 5.286 11.2499 4.872 11.2499H3.5C3.086 11.2499 2.75 11.5859 2.75 11.9999C2.75 12.4139 3.086 12.7499 3.5 12.7499H4.872C5.286 12.7499 5.622 12.4139 5.622 11.9999Z"
+                fill="currentColor"></path>
+              <path fill-rule="evenodd" clip-rule="evenodd"
+                d="M17.8935 7.35976C18.0845 7.35976 18.2775 7.28676 18.4235 7.14076L19.3945 6.17076C19.6875 5.87776 19.6875 5.40276 19.3945 5.10976C19.1015 4.81776 18.6265 4.81676 18.3335 5.10976L17.3635 6.07876C17.0705 6.37176 17.0705 6.84676 17.3635 7.13976C17.5095 7.28676 17.7015 7.35976 17.8935 7.35976Z"
+                fill="currentColor"></path>
+              <path fill-rule="evenodd" clip-rule="evenodd"
+                d="M18.4238 16.8593C18.1298 16.5673 17.6548 16.5673 17.3628 16.8593C17.0698 17.1533 17.0698 17.6283 17.3628 17.9213L18.3338 18.8903C18.4808 19.0363 18.6728 19.1093 18.8638 19.1093C19.0568 19.1093 19.2478 19.0363 19.3948 18.8903C19.6878 18.5963 19.6878 18.1223 19.3948 17.8293L18.4238 16.8593Z"
+                fill="currentColor"></path>
+              <path fill-rule="evenodd" clip-rule="evenodd"
+                d="M6.57607 16.8593L5.60506 17.8293C5.31206 18.1223 5.31206 18.5963 5.60506 18.8903C5.75206 19.0363 5.94306 19.1093 6.13607 19.1093C6.32706 19.1093 6.51906 19.0363 6.66606 18.8903L7.63706 17.9213C7.93007 17.6283 7.93007 17.1533 7.63706 16.8593C7.34507 16.5673 6.87007 16.5673 6.57607 16.8593Z"
+                fill="currentColor"></path>
+              <path fill-rule="evenodd" clip-rule="evenodd"
+                d="M21.5 11.2499H20.128C19.714 11.2499 19.378 11.5859 19.378 11.9999C19.378 12.4139 19.714 12.7499 20.128 12.7499H21.5C21.914 12.7499 22.25 12.4139 22.25 11.9999C22.25 11.5859 21.914 11.2499 21.5 11.2499Z"
+                fill="currentColor"></path>
+              <path fill-rule="evenodd" clip-rule="evenodd"
+                d="M12.5 18.8798C12.086 18.8798 11.75 19.2158 11.75 19.6298V20.9998C11.75 21.4138 12.086 21.7498 12.5 21.7498C12.914 21.7498 13.25 21.4138 13.25 20.9998V19.6298C13.25 19.2158 12.914 18.8798 12.5 18.8798Z"
+                fill="currentColor"></path>
+              <path fill-rule="evenodd" clip-rule="evenodd"
+                d="M12.5 7.29968C9.91099 7.29968 7.80499 9.40768 7.80499 11.9997C7.80499 14.5917 9.91099 16.6997 12.5 16.6997C15.09 16.6997 17.196 14.5917 17.196 11.9997C17.196 9.40768 15.09 7.29968 12.5 7.29968Z"
+                fill="currentColor"></path>
+            </svg>
+
+          </button>
+          <div>
+          </div>
+
+    </header>
+
+    <!-- Sticky Navigation Bar -->
+    <nav id="sticky-nav" class="sticky-nav hidden flex">
+      <div class="container mx-auto max-w-7xl px-4">
+        <div id="nav-links-container" class="flex items-center overflow-x-auto">
+          <!-- Dynamic Nav Links will be injected here -->
+        </div>
+      </div>
+
+    </nav>
+
+    <!-- Main Application Container -->
+    <div class="container mx-auto p-4 lg:p-8 max-w-7xl">
+      <div id="main-grid" class="grid grid-cols-1 gap-8 lg:grid-cols-3 lg:gap-8 mb-20 md:m-0">
+        <main class="lg:col-span-2">
+          <!-- Screen 1: Merged Package Selection and Customization -->
+          <section id="screen-order-form" class="screen active flex flex-col gap-4">
+            <!-- This will be populated dynamically -->
+          </section>
+
+          <!-- Screen 2: Checkout -->
+          <section id="screen-checkout" class="screen">
+            <!-- Title removed as per user request to improve alignment and reduce vertical space -->
+            <form id="checkout-form" class="p-6 space-y-5 card">
+              <div id="checkout-error" class="hidden p-3 text-center text-sm rounded-lg"
+                style="background-color: rgba(239, 68, 68, 0.1); color: var(--color-danger);">
+                אירעה שגיאה. אנא נסה שוב.
+              </div>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5">
+                <div>
+                  <label for="fullName" class="block text-base font-semibold mb-2"
+                    style="color: var(--color-text-strong);">שם מלא</label>
+                  <input type="text" id="fullName" required
+                    class="w-full !p-3 !rounded-lg !border !bg-transparent transition focus:ring-2 focus:ring-offset-1 focus:ring-primary-light focus:outline-none"
+                    style="border-color: var(--color-border-light);" />
+                </div>
+                <div>
+                  <label for="phone" class="block text-base font-semibold mb-2"
+                    style="color: var(--color-text-strong);">טלפון</label>
+                  <input type="tel" id="phone" required
+                    class="w-full !p-3 !rounded-lg !border !bg-transparent transition focus:ring-2 focus:ring-offset-1 focus:ring-primary-light focus:outline-none"
+                    style="border-color: var(--color-border-light);" />
+                </div>
+              </div>
+              <div>
+                <label for="address" class="block text-base font-semibold mb-2"
+                  style="color: var(--color-text-strong);">כתובת האירוע</label>
+                <input type="text" id="address" required
+                  class="w-full !p-3 !rounded-lg !border !bg-transparent transition focus:ring-2 focus:ring-offset-1 focus:ring-primary-light focus:outline-none"
+                  style="border-color: var(--color-border-light);" />
+              </div>
+              <div>
+                <label class="block text-base font-semibold mb-3" style="color: var(--color-text-strong);">תאריך
+                  האירוע</label>
+                <div id="date-options-container" class="flex flex-wrap gap-2 mb-3">
+                  <!-- Dynamic buttons will be injected here by JS -->
+                </div>
+                <input type="date" id="eventDate"
+                  class="w-full !p-3 !rounded-lg !border !bg-transparent transition focus:ring-2 focus:ring-offset-1 focus:ring-primary-light focus:outline-none"
+                  style="border-color: var(--color-border-light);" />
+              </div>
+              <div>
+                <label for="notes" class="block text-base font-semibold mb-2"
+                  style="color: var(--color-text-strong);">הערות נוספות</label>
+                <textarea id="notes" rows="4"
+                  class="w-full !p-3 !rounded-lg !border !bg-transparent transition focus:ring-2 focus:ring-offset-1 focus:ring-primary-light focus:outline-none"
+                  style="border-color: var(--color-border-light);"></textarea>
+              </div>
+              <!-- The "eventManagerQuote" checkbox has been moved to the extras section -->
+            </form>
+          </section>
+
+          <!-- Screen 3: Summary -->
+          <section id="screen-summary" class="screen text-center">
+            <div class="p-8 card">
+              <div id="summary-icon-success">
+                <svg class="mx-auto h-16 w-16" style="color: var(--color-primary);" fill="none" viewBox="0 0 24 24"
+                  stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <div id="summary-icon-error" class="hidden">
+                <svg class="mx-auto h-16 w-16" style="color: var(--color-danger);" fill="none" viewBox="0 0 24 24"
+                  stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <h2 id="summary-title" class="text-2xl font-semibold mt-4" style="color: var(--color-text-strong);">
+                ההזמנה מוכנה לשליחה!
+              </h2>
+              <p id="summary-subtitle" class="mt-2 mb-6" style="color: var(--color-text-muted);">
+                שלח לנו את סיכום ההזמנה ב-WhatsApp ונחזור אליך בהקדם לאישור סופי.
+              </p>
+
+
+
+              <div class="mt-6 flex flex-col sm:flex-row gap-4 justify-center">
+                <button id="copy-summary-btn"
+                  class="w-full sm:w-auto text-white font-bold py-3 px-6 rounded-lg btn-primary flex items-center justify-center gap-2">
+                  <svg id="Copy 2" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                    xmlns="http://www.w3.org/2000/svg">
+                    <path fill-rule="evenodd" clip-rule="evenodd"
+                      d="M15.5654 6.68609C15.709 6.68609 15.8254 6.56969 15.8254 6.42609C15.8254 4.07609 14.3154 2.49609 12.0554 2.49609H6.28537C4.02537 2.49609 2.50537 4.07609 2.50537 6.42609V11.8661C2.50537 14.2261 4.02537 15.8061 6.28537 15.8061H6.37537C6.54106 15.8061 6.67537 15.6718 6.67537 15.5061V12.1261C6.67537 8.97609 8.89537 6.68609 11.9454 6.68609H15.5654Z"
+                      fill="currentColor"></path>
+                    <path fill-rule="evenodd" clip-rule="evenodd"
+                      d="M17.7215 8.18579H11.9485C9.69148 8.18579 8.17548 9.76979 8.17548 12.1258V17.5648C8.17548 19.9208 9.69148 21.5048 11.9485 21.5048H17.7205C19.9775 21.5048 21.4945 19.9208 21.4945 17.5648V12.1258C21.4945 9.76979 19.9785 8.18579 17.7215 8.18579Z"
+                      fill="currentColor"></path>
+                  </svg>
+                  <span>העתק סיכום</span>
+                </button>
+                <a id="whatsapp-share-btn" href="#" target="_blank"
+                  class="w-full sm:w-auto text-white font-bold py-3 px-6 rounded-lg flex items-center justify-center gap-2 btn-whatsapp">
+                  <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                    <path
+                      d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.894 11.892-1.99 0-3.903-.52-5.687-1.475L.057 24zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.5-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.626.712.227 1.36.195 1.871.118.571-.078 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z" />
+                  </svg>
+                  <span>שלח לנו ב-WhatsApp</span>
+                </a>
+              </div>
+
+              <button id="new-order-btn" class="w-full sm:w-auto text-center mt-4 py-2 rounded-lg btn-secondary">
+                התחל הזמנה חדשה
+              </button>
+              <div class="mt-6 p-4 rounded-lg text-right text-sm" style="background-color: var(--color-background)">
+                <p id="friendly-summary" class="whitespace-pre-wrap break-words text-left" style="text-align: right">
+                </p>
+              </div>
+            </div>
+          </section>
+        </main>
+
+        <!-- Side Cart (Desktop) -->
+        <aside id="side-cart" class="lg:col-span-1">
+          <div class="sticky top-0 md:top-16">
+            <div id="side-cart-content" class="p-6 card">
+              <!-- Side cart content will be rendered here -->
+            </div>
+          </div>
+        </aside>
+      </div>
+    </div>
+
+    <!-- Mobile Summary Trigger -->
+    <div id="mobile-summary-trigger" class="lg:hidden fixed bottom-0 left-0 right-0 p-4" style="
+          background: var(--color-surface);
+          border-top: 1px solid var(--color-border);
+          transform: translateY(100%);
+          transition: transform 0.3s ease-in-out;
+        ">
+      <button class="w-full font-bold py-3 px-4 rounded-lg text-lg flex justify-between items-center btn-primary">
+        <span>🛒 הצג סיכום הזמנה</span>
+        <span id="mobile-summary-price">0 ₪</span>
+      </button>
+    </div>
+
+    <!-- Mobile Summary Modal -->
+    <div id="mobile-summary-modal" class="fixed inset-0 bg-black bg-opacity-60 z-[60] opacity-0 mobile-summary-modal">
+      <!-- Pease dont add pointer-events: none; it cause issues-->
+      <div class="absolute inset-0" id="mobile-summary-overlay"></div>
+      <div id="mobile-summary-panel"
+        class="absolute bottom-0 left-0 right-0 rounded-t-2xl transform translate-y-full mobile-summary-panel">
+        <!-- Close button added for better UX -->
+        <div class="p-2 absolute top-2 left-2 z-10">
+          <button id="mobile-summary-close-btn"
+            class="h-8 w-8 !p-0 rounded-full flex items-center justify-center mobile-modal-close-btn">
+            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </button>
+        </div>
+        <div id="mobile-summary-content-container" class="p-4 pt-8 max-h-[70vh] overflow-y-auto">
+          <!-- content is populated here by JS -->
+        </div>
+      </div>
+    </div>
+
+
+    <!-- Resume Order Modal -->
+    <div id="resume-order-modal"
+      class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 hidden">
+      <div class="p-8 text-center max-w-sm card">
+        <h3 class="text-xl font-bold mb-4" style="color: var(--color-text-strong)">
+          הזמנה בתהליך
+        </h3>
+        <p class="mb-6">
+          נראה שהתחלת הזמנה ולא סיימת אותה. האם תרצה להמשיך מהיכן שהפסקת?
+        </p>
+        <div class="flex justify-center gap-4">
+          <button id="resume-yes-btn" class="font-bold py-2 px-6 rounded-lg btn-primary">
+            כן, המשך
+          </button>
+          <button id="resume-no-btn" class="font-bold py-2 px-6 rounded-lg btn-secondary"
+            style="background-color: var(--color-border)">
+            לא, התחל חדש
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const appSettings = {
+        // --- NEW CONFIGURATION SECTION ---
+        config: {
+          orderMinimums: {
+            defaultMinPortions: 30, // הגדרת מינימום מנות רגיל (ברירת מחדל)
+            specialDates: [
+              { date: "2026-03-02", minPortions: 45 }, // תאריכי פורים
+              { date: "2026-03-03", minPortions: 45 }
+            ]
+          },
+          notices: [
+            {
+              text: "🎉 <strong>הזמנות לפורים:</strong> שימו לב כי בתאריכים 02/03 - 03/03 מינימום ההזמנה הוא 45 מנות.",
+              startDate: "", // אם ריק - ההודעה תוצג מידית (מהיום)
+              endDate: "2026-03-03" // ההודעה תעלם אחרי חצות של תאריך זה
+            }
+          ]
+        },
+        // ---------------------------------
+        items: {
+          item_salad_matbucha: { name: "מטבוחה" },
+          item_salad_fried_eggplant: { name: "חציל מטוגן בוינגרט" },
+          item_salad_eggplant_mayo: { name: "חציל במיונז" },
+          item_salad_zaalouk: { name: "חציל ז'עלוק - קלוי" },
+          item_salad_baladi_eggplant: { name: "חציל בלאדי-חציל קלוי בטחינה" },
+          item_salad_moroccan_beet: { name: "סלק מרוקאי" },
+          item_salad_tripoli_carrot: { name: "גזר טריפוליטאי" },
+          item_salad_green_salad: {
+            name: "סלט ירוק – בתוספת פיצוחים חמוציות ורוטב סילאן",
+          },
+          item_salad_spicy_pepper: { name: "פלפל חריף-מתובל בשום" },
+          item_salad_hummus: { name: "חומוס ישראלי", imageUrl: "" },
+          item_salad_tahini: { name: "טחינה" },
+          item_salad_arabic_salad: {
+            name: "סלט ערבי-קוביות עגבניות בירק שום ופלפל חריף",
+          },
+          item_salad_israeli_salad: { name: "סלט ירקות ישראלי" },
+          item_salad_lettuce_cherry: { name: "חסה עם שרי", imageUrl: "https://www.agada-c.co.il/wp-content/uploads/2025/09/cabbage.png" },
+          item_salad_white_cabbage: {
+            name: "כרוב לבן- בירק חמוציות ובוטנים",
+          },
+          item_salad_pickles: { name: "חמוצי הבית" },
+          item_salad_olives: { name: "זיתים מבוקעים גדולים" },
+          item_salad_cucumber_dill: { name: "טבעות מלפפון בשמיר" },
+          item_salad_coleslaw: { name: "כרוב וגזר במיונז (קולסלו)" },
+          item_salad_red_cabbage_mayo: { name: "כרוב אדום במיונז" },
+          item_salad_red_cabbage_cranberry: { name: "כרוב אדום וחמוציות" },
+          item_salad_mexican_corn: { name: "תירס מקסיקני" },
+          item_salad_beans: { name: "פולים-מתובלים בכמון" },
+          item_salad_potato_mayo: { name: 'סלט מיונז-קוביות תפו"א' },
+          item_salad_tabbouleh: { name: "טאבולה" },
+          item_fc_musht_mizrahi: {
+            name: "פילה מושט מזרחי - ברוטב עגבניות, פלפל שום וגרגרי חומוס.",
+          },
+          item_fc_musht_fried: {
+            name: "פילה מושט מטוגן – מוגש לצד רוטב צ'רמלה פיקנטי ופלחי לימון.",
+          },
+          item_fc_sole_fried: { name: "סול מטוגן – מוגש לצד רוטב צ'רמלה." },
+          item_fc_salmon_mizrahi: {
+            name: "סלומון מזרחי – פילה סלומון טרי ברוטב עשיר של כוסברה פלפלים שום וחומוס מבושל.",
+          },
+          item_fc_salmon_herbs: {
+            name: "סלומון בעשבי תיבול – פילה סלומון עסיסי בעשבי תיבול טריים, שום וחרדל.",
+          },
+          item_fc_princess_moroccan: { name: "דג נסיכה מזרחי בסגנון מרוקאי" },
+          item_fc_borekas_potato: { name: 'בורקס תפו"א- ברוטב פטריות' },
+          item_fc_chef_pastry: { name: "מאפה השף" },
+          item_fc_tortilla_beef: {
+            name: "טורטיה מקסיקנית - במילוי בשר עגל – מומלץ!.",
+          },
+          item_fc_tortilla_veg: {
+            name: "טורטיה מקסיקנית במילוי ירקות – מנה טבעונית.",
+          },
+          item_fc_meat_roll: { name: "רול בשר עבודת יד" },
+          item_mc_chicken_grill: { name: "גריל עוף – כרעיים צלויות" },
+          item_mc_chicken_half: { name: "חצאי כרעיים" },
+          item_mc_pargit_steak: { name: "סטייק פרגית ארוך על האש" },
+          item_mc_schnitzel: {
+            name: "שניצל וינאי – שניצל עוף פריך וזהוב מתובל בפרורי לחם ושומשום",
+          },
+          item_mc_schnitzel_half: { name: "חצאי שניצל" },
+          item_mc_beef_roast: { name: "צלי כתף ארגנטינאי טרי" },
+          item_mc_tongue: { name: "לשון ברוטב" },
+          item_mc_asado: { name: "אסאדו – נתחי אסאדו ארגנטינאי בבישול איטי" },
+          item_mc_kebab: {
+            name: "קבב אגדה – שיפודי קבב בעבודת יד עסיסיים על האש – מומלץ!.",
+          },
+          item_mc_chicken_skewer: { name: "שיפודי עוף על האש" },
+          item_mc_chicken_breast: { name: "חזה עוף" },
+          item_mc_shabbat_chicken_grill: { name: "גריל עוף – כרעיים צלויות" },
+          item_mc_shabbat_chicken_half: { name: "חצאי כרעיים" },
+          item_mc_shabbat_pargit_steak: { name: "סטייק פרגית ארוך על האש" },
+          item_mc_shabbat_schnitzel: {
+            name: "שניצל וינאי – שניצל עוף פריך וזהוב מתובל בפרורי לחם ושומשום",
+          },
+          item_mc_shabbat_schnitzel_half: { name: "חצאי שניצל" },
+          item_mc_shabbat_tongue: { name: "לשון ברוטב" },
+          item_mc_shabbat_kebab: {
+            name: "קבב אגדה – שיפודי קבב בעבודת יד עסיסיים על האש – מומלץ!.",
+          },
+          item_mc_shabbat_chicken_skewer: { name: "שיפודי עוף על האש" },
+          item_mc_shabbat_chicken_breast: { name: "חזה עוף" },
+          item_side_rice_almonds: { name: "אורז לבן עם שקדים וצימוקים" },
+          item_side_baby_potato: { name: 'תפו"א בייבי בעשבי תיבול ורוזמרין' },
+          item_side_olives_mushrooms: {
+            name: "זיתים עם פטריות בסגנון מרוקאי",
+          },
+          item_side_artichoke: { name: "ארטישוק ברוטב, פטריות שלמות ובצל" },
+          item_side_peas_carrot: { name: "אפונה וגזר" },
+          item_side_stir_fry_veg: {
+            name: "ירקות מוקפצים – פלפלים, פטריות שלמות, גזר, קישוא מוקפץ ברוטב עם שומשום.",
+          },
+          item_side_spicy_beans: { name: "שעועית ברוטב פיקנטי" },
+          item_side_green_beans: {
+            name: "שעועית ירוקה מוקפצת – עם טריאקי ושומשום",
+          },
+          item_side_couscous: { name: "קוסקוס מרוקאי" },
+          item_side_couscous_veg: { name: "לקט ירקות מבושלים לקוסקוס" },
+          item_bread_challah_roll: { name: "לחמניה עגולה קלועה" },
+          item_bread_mezonot_roll: { name: "לחמניה מזונות" },
+          item_bread_parana: { name: "לחם בית (פרנה)" },
+          item_fish3_musht_mizrahi: {
+            name: "פילה מושט מזרחי - ברוטב עגבניות, פלפל שום וגרגרי חומוס.",
+          },
+          item_fish3_musht_fried: {
+            name: "פילה מושט מטוגן – מוגש לצד רוטב צ'רמלה פיקנטי ופלחי לימון.",
+          },
+          item_shabbat_cholent: { name: "חבילת חמין עשיר", isPredefined: true },
+          item_extra_khorest_sabzi: {
+            name: "חורשט סבזי",
+            isOptionalExtra: true,
+            pricePerPerson: true,
+            extraCost: 8,
+          },
+          item_extra_gondi: {
+            name: "גונדי",
+            isOptionalExtra: true,
+            pricePerPerson: true,
+            extraCost: 10,
+          },
+          item_extra_fish_patties: {
+            name: "50 קציצות דגים סלומון ברוטב מזרחי עבודת יד - מומלץ!",
+            isOptionalExtra: true,
+            extraCost: 250,
+          },
+          item_extra_cigars: {
+            name: "סיגרים גסטרונום ענק",
+            isOptionalExtra: true,
+            extraCost: 150,
+          },
+          item_extra_pastels: {
+            name: "פסטלים גסטרונום ענק",
+            isOptionalExtra: true,
+            extraCost: 150,
+          },
+          item_extra_kubbeh: {
+            name: "קובה בורגול גסטרונום ענק",
+            isOptionalExtra: true,
+            extraCost: 150,
+          },
+          item_extra_head_meat: {
+            name: "בשר ראש בסגנון מזרחי גסטרונום ענק",
+            isOptionalExtra: true,
+            extraCost: 450,
+          },
+          item_extra_chips: {
+            name: "צ׳יפס גסטרונום ענק",
+            isOptionalExtra: true,
+            extraCost: 150,
+          },
+          item_extra_schnitzelonim: {
+            name: "שניצלונים גסטרונום ענק",
+            isOptionalExtra: true,
+            extraCost: 250,
+          },
+          item_extra_desserts: {
+            name: "פלטת מיקס קינוחים",
+            isOptionalExtra: true,
+            extraCost: 180,
+          },
+        },
+        categories: {
+          cat_salads_8: {
+            name: "סלטים",
+            emoji: "🥗",
+            imageUrl: "",
+            selectionLimit: 8,
+            itemIds: [
+              "item_salad_matbucha",
+              "item_salad_fried_eggplant",
+              "item_salad_eggplant_mayo",
+              "item_salad_zaalouk",
+              "item_salad_baladi_eggplant",
+              "item_salad_moroccan_beet",
+              "item_salad_tripoli_carrot",
+              "item_salad_green_salad",
+              "item_salad_spicy_pepper",
+              "item_salad_hummus",
+              "item_salad_tahini",
+              "item_salad_arabic_salad",
+              "item_salad_israeli_salad",
+              "item_salad_lettuce_cherry",
+              "item_salad_white_cabbage",
+              "item_salad_pickles",
+              "item_salad_olives",
+              "item_salad_cucumber_dill",
+              "item_salad_coleslaw",
+              "item_salad_red_cabbage_mayo",
+              "item_salad_red_cabbage_cranberry",
+              "item_salad_mexican_corn",
+              "item_salad_beans",
+              "item_salad_potato_mayo",
+              "item_salad_tabbouleh",
+            ],
+          },
+          cat_first_courses_2: {
+            name: "מנות ראשונות",
+            emoji: "🐟",
+            selectionLimit: 2,
+            itemIds: [
+              "item_fc_musht_mizrahi",
+              "item_fc_musht_fried",
+              "item_fc_sole_fried",
+              "item_fc_salmon_mizrahi",
+              "item_fc_salmon_herbs",
+              "item_fc_princess_moroccan",
+              "item_fc_borekas_potato",
+              "item_fc_chef_pastry",
+              "item_fc_tortilla_beef",
+              "item_fc_tortilla_veg",
+              "item_fc_meat_roll",
+            ],
+          },
+          cat_main_courses_3: {
+            name: "מנות עיקריות",
+            emoji: "🍖",
+            selectionLimit: 3,
+            itemIds: [
+              "item_mc_chicken_grill",
+              "item_mc_chicken_half",
+              "item_mc_pargit_steak",
+              "item_mc_schnitzel",
+              "item_mc_schnitzel_half",
+              "item_mc_beef_roast",
+              "item_mc_tongue",
+              "item_mc_asado",
+              "item_mc_kebab",
+              "item_mc_chicken_skewer",
+              "item_mc_chicken_breast",
+            ],
+          },
+          cat_main_courses_shabbat_3: {
+            name: "מנות עיקריות (שבת בבוקר)",
+            emoji: "🍖",
+            selectionLimit: 3,
+            itemIds: [
+              "item_mc_shabbat_chicken_grill",
+              "item_mc_shabbat_chicken_half",
+              "item_mc_shabbat_pargit_steak",
+              "item_mc_shabbat_schnitzel",
+              "item_mc_shabbat_schnitzel_half",
+              "item_mc_shabbat_tongue",
+              "item_mc_shabbat_kebab",
+              "item_mc_shabbat_chicken_skewer",
+              "item_mc_shabbat_chicken_breast",
+            ],
+          },
+          cat_sides_3: {
+            name: "תוספות חמות",
+            emoji: "🍚",
+            selectionLimit: 3,
+            itemIds: [
+              "item_side_rice_almonds",
+              "item_side_baby_potato",
+              "item_side_olives_mushrooms",
+              "item_side_artichoke",
+              "item_side_peas_carrot",
+              "item_side_stir_fry_veg",
+              "item_side_spicy_beans",
+              "item_side_green_beans",
+              "item_side_couscous",
+              "item_side_couscous_veg",
+            ],
+          },
+          cat_breads_2: {
+            name: "לחמניות ופרנות",
+            emoji: "🥖",
+            selectionLimit: 2,
+            itemIds: [
+              "item_bread_challah_roll",
+              "item_bread_mezonot_roll",
+              "item_bread_parana",
+            ],
+          },
+          cat_third_meal_fish_1: {
+            name: "דגים לסעודה שלישית",
+            emoji: "🐠",
+            selectionLimit: 1,
+            itemIds: ["item_fish3_musht_mizrahi", "item_fish3_musht_fried"],
+          },
+          cat_extras: {
+            name: "תוספות ופינוקים",
+            emoji: "✨",
+            groups: [
+              {
+                name: "תוספות מיוחדות",
+                emoji: "⭐",
+                itemIds: ["item_extra_khorest_sabzi", "item_extra_gondi"]
+              },
+              {
+                name: "פלטות פינוק",
+                emoji: "🍽️",
+                itemIds: [
+                  "item_extra_fish_patties",
+                  "item_extra_cigars",
+                  "item_extra_pastels",
+                  "item_extra_kubbeh",
+                  "item_extra_head_meat",
+                  "item_extra_chips",
+                  "item_extra_schnitzelonim",
+                ]
+              },
+              {
+                name: "מנה אחרונה",
+                emoji: "🍰",
+                itemIds: ["item_extra_desserts"]
+              },
+              {
+                name: "ניהול אירוע",
+                emoji: "🤵",
+                isSpecial: true,
+                id: "event-management"
+              }
+            ]
+          },
+        },
+        packages: {
+          pkg_fish: {
+            name: "אגדת הדגים",
+            includes: [
+              "8 סוגי סלטים לבחירה",
+              "2 מנות ראשונות",
+              "3 תוספות חמות",
+              "לחמניות ופרנות עבודת יד",
+            ],
+            basePricePerPerson: 48,
+            imageUrl:
+              "https://www.agada-c.co.il/wp-content/uploads/2025/08/freepik__the-style-is-candid-image-photography-with-natural__2426.png",
+            meals: [
+              {
+                name: "הארוחה העיקרית",
+                categoryIds: [
+                  "cat_salads_8",
+                  "cat_first_courses_2",
+                  "cat_sides_3",
+                  "cat_breads_2",
+                ],
+              },
+            ],
+          },
+          pkg_meat: {
+            name: "אגדת הבשרים",
+            includes: [
+              "8 סוגי סלטים לבחירה",
+              "3 מנות עיקריות",
+              "3 תוספות חמות",
+              "לחמניות ופרנות עבודת יד",
+            ],
+            basePricePerPerson: 55,
+            imageUrl:
+              "https://www.agada-c.co.il/wp-content/uploads/2025/08/אגדת-הבשרים-תמונה-ראשית.png",
+            meals: [
+              {
+                name: "הארוחה העיקרית",
+                categoryIds: [
+                  "cat_salads_8",
+                  "cat_main_courses_3",
+                  "cat_sides_3",
+                  "cat_breads_2",
+                ],
+              },
+            ],
+          },
+          pkg_perfect: {
+            name: "האגדה המושלמת",
+            includes: [
+              "8 סוגי סלטים לבחירה",
+              "2 מנות ראשונות",
+              "3 מנות עיקריות",
+              "3 תוספות חמות",
+              "לחמניות ופרנות עבודת יד",
+            ],
+            basePricePerPerson: 70,
+            imageUrl:
+              "https://www.agada-c.co.il/wp-content/uploads/2025/08/freepik__enhance__10857-scaled.png",
+            meals: [
+              {
+                name: "הארוחה העיקרית",
+                categoryIds: [
+                  "cat_salads_8",
+                  "cat_first_courses_2",
+                  "cat_main_courses_3",
+                  "cat_sides_3",
+                  "cat_breads_2",
+                ],
+              },
+            ],
+          },
+          pkg_shabbat: {
+            name: "אגדת השבת",
+            includes: [
+              "8 סוגי סלטים לבחירה",
+              "כולל 3 סעודות מלאות",
+              "3 תוספות חמות",
+              "לחמניות ופרנות עבודת יד",
+            ],
+            basePricePerPerson: 140,
+            imageUrl:
+              "https://www.agada-c.co.il/wp-content/uploads/2025/08/freepik__the-style-is-candid-image-photography-with-natural__2425.png",
+            meals: [
+              {
+                name: "סלטים (נבחרים פעם אחת לכל הסעודות)",
+                categoryIds: ["cat_salads_8"],
+              },
+              {
+                name: "סעודה ראשונה",
+                categoryIds: [
+                  "cat_first_courses_2",
+                  "cat_main_courses_3",
+                  "cat_sides_3",
+                  "cat_breads_2",
+                ],
+              },
+              {
+                name: "סעודת שבת בבוקר",
+                hasChoice: true,
+                options: [
+                  {
+                    id: 'cholent',
+                    name: 'חבילת חמין עשיר',
+                    description: 'חמין בקר עשיר עם תפו"א, חיטה, שעועית וביצים.',
+                    itemIdsToAdd: ['item_shabbat_cholent'],
+                    categoryIds: []
+                  },
+                  {
+                    id: 'mains_and_sides',
+                    name: 'מנות עיקריות ותוספות',
+                    description: 'בחירה מתוך מגוון מנות עיקריות ותוספות חמות.',
+                    itemIdsToAdd: [],
+                    categoryIds: ["cat_main_courses_shabbat_3", "cat_sides_3"]
+                  }
+                ]
+              },
+              {
+                name: "סעודה שלישית",
+                categoryIds: ["cat_third_meal_fish_1"],
+              },
+            ],
+          },
+        },
+      };
+
+      const initialOrder = {
+        customer: {
+          name: "",
+          phone: "",
+          address: "",
+          eventDate: "",
+          notes: "",
+          wantsQuote: false,
+        },
+        summary: {
+          packageId: null,
+          packageName: "",
+          peopleCount: appSettings.config.orderMinimums.defaultMinPortions, // Use dynamic default minimum
+          totalPrice: 0,
+          createdDate: null,
+        },
+        selections: {
+          shabbatMorningChoice: null
+        },
+        items: [],
+      };
+
+      const LOCAL_STORAGE_KEY = "agadaCateringOrder";
+      let orderObject = JSON.parse(JSON.stringify(initialOrder));
+
+      const screens = {
+        orderForm: document.getElementById("screen-order-form"),
+        checkout: document.getElementById("screen-checkout"),
+        summary: document.getElementById("screen-summary"),
+      };
+      const sideCartContent = document.getElementById("side-cart-content");
+      const mobileSummaryTrigger = document.getElementById(
+        "mobile-summary-trigger"
+      );
+      const mobileSummaryPrice = document.getElementById(
+        "mobile-summary-price"
+      );
+      const stickyNav = document.getElementById("sticky-nav");
+      const navLinksContainer = document.getElementById(
+        "nav-links-container"
+      );
+      const mainGrid = document.getElementById("main-grid");
+
+      const resumeModal = document.getElementById("resume-order-modal");
+      const checkmarkIcon = `<svg class="w-5 h-5 flex-shrink-0" style="color: var(--color-primary);" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M12.25 3.75C7.69329 3.75 4 7.44329 4 12C4 16.5558 7.69335 20.25 12.25 20.25C16.8067 20.25 20.5 16.5558 20.5 12C20.5 7.44329 16.8067 3.75 12.25 3.75ZM2.5 12C2.5 6.61487 6.86487 2.25 12.25 2.25C17.6351 2.25 22 6.61487 22 12C22 17.3841 17.6352 21.75 12.25 21.75C6.86481 21.75 2.5 17.3841 2.5 12Z" fill="currentColor"></path><path fill-rule="evenodd" clip-rule="evenodd" d="M16.2431 9.16108C16.5359 9.45397 16.5359 9.92884 16.2431 10.2217L11.6253 14.8395C11.3325 15.1323 10.8577 15.1324 10.5648 14.8396L8.25494 12.5307C7.96198 12.2379 7.96188 11.763 8.25471 11.4701C8.54755 11.1771 9.02242 11.177 9.31537 11.4698L11.0949 13.2486L15.1824 9.16108C15.4753 8.86818 15.9502 8.86818 16.2431 9.16108Z" fill="currentColor"></path></svg>`;
+
+      // --- Core Logic & Functions ---
+
+      const sanitizeForId = (str) =>
+        str.replace(/[\s()]/g, "-").replace(/--+/g, "-");
+
+      // --- New Helper Functions ---
+      function getActiveNotices() {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        return (appSettings.config.notices || []).filter(notice => {
+          let start = new Date(0); 
+          if (notice.startDate) {
+            start = new Date(notice.startDate);
+            start.setHours(0, 0, 0, 0);
+          }
+
+          let end = new Date("2099-12-31"); 
+          if (notice.endDate) {
+            end = new Date(notice.endDate);
+            end.setHours(23, 59, 59, 999);
+          }
+
+          return today >= start && today <= end;
+        });
+      }
+
+      function getRequiredMinPortions() {
+        const minConfig = appSettings.config.orderMinimums;
+        let minAllowed = minConfig.defaultMinPortions;
+        
+        // אם המשתמש כבר בחר תאריך, נבדוק אם הוא שייך לתאריכים המיוחדים
+        if (orderObject.customer.eventDate) {
+          const specialDate = minConfig.specialDates.find(d => d.date === orderObject.customer.eventDate);
+          if (specialDate) {
+            minAllowed = specialDate.minPortions;
+          }
+        }
+        return minAllowed;
+      }
+      // -----------------------------
+
+      function saveOrder() {
+        if (orderObject && orderObject.summary.packageId) {
+          localStorage.setItem(
+            LOCAL_STORAGE_KEY,
+            JSON.stringify(orderObject)
+          );
+        }
+      }
+
+      function clearSavedOrder() {
+        localStorage.removeItem(LOCAL_STORAGE_KEY);
+      }
+
+      function getCurrentScreenName() {
+        const currentScreen = document.querySelector(".screen.active");
+        return Object.keys(screens).find(
+          (key) => screens[key] === currentScreen
+        );
+      }
+
+      function navigateTo(screenName) {
+        Object.values(screens).forEach((screen) =>
+          screen.classList.remove("active")
+        );
+        if (screens[screenName]) {
+          screens[screenName].classList.add("active");
+        }
+
+        const isOrderFormScreen = screenName === "orderForm";
+        const isPackageSelected = !!orderObject.summary.packageId;
+
+        // Back button logic is now handled inside the cart, so we remove the header button logic
+
+        stickyNav.classList.toggle(
+          "hidden",
+          !isOrderFormScreen || !isPackageSelected
+        );
+
+        if (isOrderFormScreen && isPackageSelected) {
+          mobileSummaryTrigger.style.transform = "translateY(0%)";
+        } else {
+          mobileSummaryTrigger.style.transform = "translateY(100%)";
+        }
+
+        updateSideCart();
+      }
+
+      function updateLayoutForPackageSelection() {
+        const isPackageSelected = !!orderObject.summary.packageId;
+        const sideCart = document.getElementById("side-cart");
+
+        if (!sideCart) return;
+
+        const mainContent = sideCart.previousElementSibling;
+
+        if (isPackageSelected) {
+          mainGrid.classList.add("lg:grid-cols-3");
+          mainContent.classList.add("lg:col-span-2");
+          sideCart.classList.remove("hidden");
+        } else {
+          mainGrid.classList.remove("lg:grid-cols-3");
+          mainContent.classList.remove("lg:col-span-2");
+          sideCart.classList.add("hidden");
+        }
+      }
+
+      function handleBack() {
+        const currentScreen = getCurrentScreenName();
+        if (currentScreen === "checkout") {
+          navigateTo("orderForm");
+        } else if (
+          currentScreen === "orderForm" &&
+          orderObject.summary.packageId
+        ) {
+          orderObject = JSON.parse(JSON.stringify(initialOrder));
+          clearSavedOrder();
+          renderOrderForm();
+          updateSideCart();
+          navigateTo("orderForm");
+        }
+      }
+
+      function calculatePrice() {
+        if (!orderObject.summary.packageId) {
+          orderObject.summary.totalPrice = 0;
+          updateSideCart();
+          return;
+        }
+        const pkg = appSettings.packages[orderObject.summary.packageId];
+        const basePrice =
+          pkg.basePricePerPerson * orderObject.summary.peopleCount;
+        let extrasTotal = 0;
+        orderObject.items.forEach((item) => {
+          if (item.isExtra) {
+            const itemInfo = appSettings.items[item.itemId];
+            if (itemInfo.pricePerPerson) {
+              extrasTotal += item.pricePerUnit * orderObject.summary.peopleCount;
+            } else {
+              extrasTotal += item.pricePerUnit * item.quantity;
+            }
+          }
+        });
+        orderObject.summary.totalPrice = basePrice + extrasTotal;
+        updateSideCart();
+        saveOrder();
+      }
+
+      // This is now a standalone helper function, accessible from anywhere.
+      const populateCart = (container, toggleMobileSummary) => {
+        const currentScreen = getCurrentScreenName();
+        const pkg = appSettings.packages[orderObject.summary.packageId];
+        const extras = orderObject.items.filter((i) => i.isExtra);
+        const basePriceTotal = pkg.basePricePerPerson * orderObject.summary.peopleCount;
+
+        const reqMin = getRequiredMinPortions();
+        let qtyWarningHtml = "";
+        let isSubmitDisabled = false;
+
+        // אזהרה ועצירת הגשה אם הכמות קטנה מהמינימום הנדרש לתאריך הנבחר
+        if (orderObject.summary.peopleCount < reqMin) {
+            qtyWarningHtml = `
+                <div class="p-3 mb-4 text-sm font-semibold rounded-lg" style="background-color: rgba(239, 68, 68, 0.1); color: var(--color-danger); border: 1px solid var(--color-danger);">
+                    שימו לב: לתאריך הנבחר נדרש מינימום של ${reqMin} מנות.
+                </div>
+            `;
+            if (currentScreen === "checkout") {
+                isSubmitDisabled = true; // ננטרל את כפתור השליחה אם הוא מתחת למינימום
+            }
+        }
+
+        let extrasHtml = "";
+        if (extras.length > 0) {
+          extrasHtml = extras.map((item) => {
+            const itemInfo = appSettings.items[item.itemId];
+            let itemNameText = item.itemName;
+            let itemPriceText = '';
+            if (itemInfo.pricePerPerson) {
+              const totalItemPrice = item.pricePerUnit * orderObject.summary.peopleCount;
+              itemPriceText = `${totalItemPrice.toLocaleString()} ₪`;
+            } else {
+              itemNameText += ` (x${item.quantity})`;
+              const totalItemPrice = item.pricePerUnit * item.quantity;
+              itemPriceText = `${totalItemPrice.toLocaleString()} ₪`;
+            }
+            return `<div class="flex justify-between items-center text-sm"><p>${itemNameText}</p><p class="font-semibold">${itemPriceText}</p></div>`;
+          }).join("");
+        } else {
+          extrasHtml = `<p class="text-sm text-center" style="color: var(--color-text-muted);">לא נוספו תוספות.</p>`;
+        }
+
+        let buttonHtml = "";
+        // Use classes for buttons instead of IDs to avoid duplicates
+        if (currentScreen === "orderForm") {
+          buttonHtml = `<button class="js-cart-next w-full mt-4 text-white font-bold py-3 px-4 rounded-lg text-lg btn-primary">המשך לפרטים</button>
+                            <button class="js-cart-back-orderform w-full mt-2 text-center py-2 rounded-lg btn-secondary">חזור לבחירת חבילה</button>`;
+        } else if (currentScreen === "checkout") {
+          buttonHtml = `
+                    <button type="button" class="js-cart-submit w-full mt-4 text-white font-bold py-3 px-4 rounded-lg text-lg btn-primary" ${isSubmitDisabled ? 'disabled' : ''}>
+                        <span class="submit-text">שליחת הזמנה</span>
+                        <span class="spinner hidden w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mx-auto"></span>
+                    </button>
+                    <button class="js-cart-back w-full mt-2 text-center py-2 rounded-lg btn-secondary">חזור לעריכה</button>
+                    `;
+        }
+
+        // יצירת מודעות דינאמיות מתחת לעגלה (Notices)
+        const activeNotices = getActiveNotices();
+        let noticesHtml = '';
+        if (activeNotices.length > 0) {
+            noticesHtml = '<div class="space-y-3 mt-6 border-t pt-4" style="border-color: var(--color-border);">';
+            activeNotices.forEach(n => {
+                noticesHtml += `<div class="p-3 text-md rounded-lg" style="background-color: var(--color-primary-faint); color: var(--color-primary-dark); border: 1px solid var(--color-primary-light);">
+                    ${n.text}
+                </div>`;
+            });
+            noticesHtml += '</div>';
+        }
+
+        container.innerHTML = `
+                <h3 class="text-xl font-bold mb-4 pb-2 border-b" style="color: var(--color-text-strong); border-color: var(--color-border);">סיכום ההזמנה</h3>
+                ${qtyWarningHtml}
+                <div class="space-y-3 mb-4 pb-4 border-b" style="border-color: var(--color-border);">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <h4 class="text-lg font-bold" style="color: var(--color-text-strong);">${pkg.name}</h4>
+                            <span class="text-sm" style="color: var(--color-text-muted);">מחיר בסיס (${pkg.basePricePerPerson.toLocaleString()} ₪ x ${orderObject.summary.peopleCount})</span>
+                        </div>
+                        <span class="text-lg font-bold" style="color: var(--color-text-strong);">${basePriceTotal.toLocaleString()} ₪</span>
+                    </div>
+                </div>
+                <h4 class="font-bold mb-2" style="color: var(--color-text-strong);">תוספות בתשלום:</h4>
+                <div class="space-y-2 mb-4">${extrasHtml}</div>
+                <div class="space-y-2 font-bold text-lg pt-4 border-t" style="border-color: var(--color-border);">
+                    <div class="flex justify-between">
+                        <span style="color: var(--color-text-strong);">סה"כ:</span>
+                        <span style="color: var(--color-primary);">${orderObject.summary.totalPrice.toLocaleString()} ₪</span>
+                    </div>
+                </div>
+                ${buttonHtml}
+                ${noticesHtml}
+                `;
+
+        // Attach listeners to the buttons within the specific container
+        const nextBtn = container.querySelector(".js-cart-next");
+        if (nextBtn) {
+          nextBtn.onclick = () => {
+            // Check if we are inside the mobile modal to close it first
+            if (container.closest('#mobile-summary-modal')) {
+              toggleMobileSummary(false);
+            }
+            renderCheckoutScreen();
+            navigateTo("checkout");
+            scrollToTop();
+          };
+        }
+        const backBtn = container.querySelector(".js-cart-back");
+        if (backBtn) {
+          backBtn.onclick = () => {
+            if (container.closest('#mobile-summary-modal')) {
+              toggleMobileSummary(false);
+            }
+            handleBack();
+          };
+        }
+
+        const backBtnOrderForm = container.querySelector(".js-cart-back-orderform");
+        if (backBtnOrderForm) {
+          backBtnOrderForm.onclick = () => {
+            if (container.closest('#mobile-summary-modal')) {
+              toggleMobileSummary(false);
+            }
+            handleBack();
+          };
+        }
+
+        const submitBtn = container.querySelector('.js-cart-submit');
+        if (submitBtn) {
+          // Pass the specific button element to the handler
+          submitBtn.addEventListener('click', () => handleSubmitOrder(submitBtn));
+        }
+      };
+
+      const mobileSummaryModal = document.getElementById("mobile-summary-modal");
+      const mobileSummaryContentContainer = document.getElementById("mobile-summary-content-container");
+
+      const toggleMobileSummary = (show) => {
+        if (show) {
+          // The populateCart function now handles content AND attaching listeners
+          populateCart(mobileSummaryContentContainer, toggleMobileSummary);
+
+          mobileSummaryModal.style.display = 'block';
+          setTimeout(() => {
+            mobileSummaryModal.classList.add('active');
+          }, 10);
+        } else {
+          mobileSummaryModal.classList.remove('active');
+          setTimeout(() => {
+            mobileSummaryModal.style.display = 'none';
+          }, 300); // Matches transition duration
+        }
+      };
+
+      function updateSideCart() {
+        const currentScreen = getCurrentScreenName();
+        const hasPackage = orderObject.summary.packageId;
+
+        if (!hasPackage || currentScreen === "summary") {
+          sideCartContent.innerHTML = `<p class="text-center" style="color: var(--color-text-muted);">בחר חבילה כדי להתחיל.</p>`;
+          mobileSummaryPrice.textContent = `0 ₪`;
+          return;
+        }
+
+        // Always populate the desktop cart
+        populateCart(sideCartContent, toggleMobileSummary);
+
+        mobileSummaryPrice.textContent = `${orderObject.summary.totalPrice.toLocaleString()} ₪`;
+      }
+
+      function scrollToTop() {
+        const appContainer = document.getElementById('agada-order-app');
+        const appHeader = document.getElementById('agada-order-app-header');
+        if (appHeader) {
+          appHeader.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }
+
+      function handlePackageSelect(event) {
+        const card = event.currentTarget;
+        const pkgId = card.dataset.pkgId;
+
+        orderObject.summary.packageId = pkgId;
+        orderObject.summary.packageName = appSettings.packages[pkgId].name;
+        orderObject.items = [];
+        orderObject.selections.shabbatMorningChoice = null;
+
+        renderOrderForm();
+        calculatePrice();
+        navigateTo("orderForm");
+        scrollToTop();
+      }
+
+      function renderOrderForm() {
+        const isPackageSelected = !!orderObject.summary.packageId;
+        
+        // תיקון אוטומטי של כמות: במקרה והמשתמש חזר מהקופה אחרי שבחר תאריך מיוחד
+        if (isPackageSelected) {
+            const reqMin = getRequiredMinPortions();
+            if (orderObject.summary.peopleCount < reqMin) {
+                orderObject.summary.peopleCount = reqMin;
+                calculatePrice(); // מתעדכן אוטומטית גם את הסה"כ והעגלה הצידית
+            }
+        }
+
+        const container = screens.orderForm;
+        let content = "";
+
+        updateLayoutForPackageSelection();
+
+        // Section 1: Package Selection
+        content += `<section id="package-selection-section">`;
+        if (isPackageSelected) {
+          const pkg = appSettings.packages[orderObject.summary.packageId];
+          content += `
+                    <div class="rounded-lg overflow-hidden card flex flex-col sm:flex-row gap-4 relative p-0 sm:p-4 items-center">
+                        <button id="change-package-btn" class="absolute top-4 left-4 text-sm font-semibold flex items-center p-2 rounded-lg z-10">
+                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.5L16.732 3.732z" />
+                             </svg>
+                            <span>שינוי</span>
+                        </button>
+                         <img src="${pkg.imageUrl}" alt="${pkg.name}" class="w-full h-40 sm:w-48 sm:h-32 object-cover !rounded-lg">
+                         <div class="p-0 md:p-4 flex flex-col gap-2 flex-grow text-center sm:text-right w-full md-w-auto">
+                            <h3 class="text-2xl font-bold" style="color: var(--color-text-strong);">${pkg.name}</h3>
+                            
+                            <ul class="space-y-3 text-right">
+                                            ${(pkg.includes || [])
+              .map(
+                (item) => `
+                                                <li class="flex items-center gap-3">
+                                                    ${checkmarkIcon}
+                                                    <span class="text-sm" style="color: var(--color-text-default);">${item.trim()}</span>
+                                                </li>
+                                            `
+              )
+              .join("")}
+                                        </ul>
+                                        
+                        </div>
+                           
+                    </div>
+                `;
+        } else {
+
+
+          content += `
+                    <div class="mb-6 text-center">
+                        <h2 class="text-3xl font-bold" style="color: var(--color-text-strong);">בחרו חבילה כדי להתחיל</h2>
+                        <p class="text-lg" style="color: var(--color-text-muted);">בחרו את החבילה המתאימה לאירוע שלכם.</p>
+                    </div>
+                    <div id="packages-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                        ${Object.entries(appSettings.packages)
+              .map(
+                ([pkgId, pkg]) => `
+                           <div class="package-card p-0 card flex flex-col justify-between overflow-hidden cursor-pointer" data-pkg-id="${pkgId}">
+                                <div class="flex-grow">
+                                    <img src="${pkg.imageUrl}" alt="${pkg.name
+                  }" class="w-full !h-48 object-cover">
+                                    <div class="p-3">
+                                        <div class="flex justify-between items-baseline mb-4">
+                                            <h3 class="text-xl font-bold" style="color: var(--color-text-strong);">${pkg.name
+                  }</h3>
+                                           
+                                        </div>
+                                        <ul class="space-y-3 text-right">
+                                            ${(pkg.includes || [])
+                    .map(
+                      (item) => `
+                                                <li class="flex items-center gap-3">
+                                                    ${checkmarkIcon}
+                                                    <span class="text-sm" style="color: var(--color-text-default);">${item.trim()}</span>
+                                                </li>
+                                            `
+                    )
+                    .join("")}
+                                        </ul>
+                                    </div>
+                                </div>
+                                <div class="px-6 py-2">
+                                <div class="bg-primary-light p-2 rounded-lg">
+                                 <p class="text-2xl font-bold text-center" style="color: var(--color-primary);">${pkg.basePricePerPerson
+                  } ₪</p>
+                                            </div>
+                                            </div>
+                                <div class="p-6 pt-0">
+                                    <button class="w-full text-white font-bold py-3 px-6 rounded-lg btn-primary">בחר חבילה</button>
+                                </div>
+                            </div>
+                        `
+              )
+              .join("")}
+                    </div>
+                 `;
+        }
+        content += `</section>`;
+
+        // Section 2: Customization (if package is selected)
+        if (isPackageSelected) {
+          const pkg = appSettings.packages[orderObject.summary.packageId];
+          renderStickyNav(pkg);
+          
+          const reqMin = getRequiredMinPortions();
+
+          content += `
+                    <section id="quantity-section" class="card quantity-selector">
+                        <h3 class="text-lg font-semibold mb-4 text-center" style="color: var(--color-text-strong);">כמה מנות תרצו להזמין? (מינימום ${reqMin})</h3>
+                        <div class="flex flex-col items-center justify-center">
+                          <div class="flex items-center justify-center gap-4">
+                              <button data-change="10" class="!p-1 h-14 w-14 rounded-full text-2xl font-bold btn-primary flex items-center justify-center">
+                              <svg id="Plus 4" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path fill-rule="evenodd" clip-rule="evenodd" d="M12 5C12.5523 5 13 5.44772 13 6V11H18C18.5523 11 19 11.4477 19 12C19 12.5523 18.5523 13 18 13H13V18C13 18.5523 12.5523 19 12 19C11.4477 19 11 18.5523 11 18V13H6C5.44772 13 5 12.5523 5 12C5 11.4477 5.44772 11 6 11H11V6C11 5.44772 11.4477 5 12 5Z" fill="currentColor"></path>
+  </svg>
+                              </button>
+                              <input type="number" id="numberOfPeople" value="${orderObject.summary.peopleCount}" min="${reqMin}" class="!w-20 mr-3 text-center text-3xl font-bold !border-0 bg-transparent focus:ring-0 flex items-center justify-center" style="color: var(--color-text-strong);">
+                              <button data-change="-10" class="!p-1 h-14 w-14 rounded-full text-2xl font-bold flex items-center justify-center" style="background-color: var(--color-border); color: var(--color-text-muted);">
+                              <svg id="Minus 4" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path fill-rule="evenodd" clip-rule="evenodd" d="M5 12C5 11.4477 5.44772 11 6 11H18C18.5523 11 19 11.4477 19 12C19 12.5523 18.5523 13 18 13H6C5.44772 13 5 12.5523 5 12Z" fill="currentColor"></path>
+  </svg>
+                              </button>
+                          </div>
+                          <!-- חיווי שגיאת מינימום מנות -->
+                          <div id="min-qty-warning" class="hidden mt-4 text-sm font-bold bg-red-100 p-2 rounded-lg" style="color: var(--color-danger);">
+                          </div>
+                        </div>
+                    </section>
+                `;
+
+          pkg.meals.forEach((meal) => {
+            content += `<section class="flex flex-col gap-4" id="meal-section-${sanitizeForId(
+              meal.name
+            )}">`;
+            content += `<h3 class="section-title mt-4">${meal.name}</h3>`;
+
+            if (meal.hasChoice) {
+              const currentChoice = orderObject.selections.shabbatMorningChoice;
+              content += `<div class="card p-6">
+                                <h4 class="text-lg font-semibold mb-4 text-center" style="color: var(--color-text-strong);">בחר אפשרות לסעודת שבת בבוקר</h4>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                ${meal.options.map(option => `
+                                    <div class="choice-card ${currentChoice === option.id ? 'selected' : ''}" data-meal-name="${meal.name}" data-choice-id="${option.id}">
+                                        <h5 class="font-bold text-lg" style="color: var(--color-text-strong);">${option.name}</h5>
+                                        <p class="text-sm mt-1" style="color: var(--color-text-muted);">${option.description}</p>
+                                    </div>
+                                `).join('')}
+                                </div>
+                            </div>`;
+
+              const selectedOption = meal.options.find(opt => opt.id === currentChoice);
+              if (selectedOption && selectedOption.categoryIds.length > 0) {
+                selectedOption.categoryIds.forEach(catId => {
+                  content += renderCategory(catId, meal);
+                });
+              }
+
+            } else {
+              meal.categoryIds.forEach((catId) => {
+                content += renderCategory(catId, meal);
+              });
+            }
+
+            content += `</section>`;
+          });
+
+          const extrasCat = appSettings.categories["cat_extras"];
+          if (extrasCat && extrasCat.groups.length > 0) {
+            content += `<section id="category-section-extras" class="mb-8">`;
+            content += `<h3 class="section-title">${extrasCat.name}</h3>`;
+
+            extrasCat.groups.forEach(group => {
+              content += `<h4 class="text-lg font-bold mt-6 mb-3 flex items-center gap-2" style="color: var(--color-text-strong);">${group.emoji} <span>${group.name}</span></h4>`;
+
+              if (group.isSpecial && group.id === 'event-management') {
+                const isChecked = orderObject.customer.wantsQuote ? 'checked' : '';
+                content += `<div class="card p-4 flex items-center justify-between">
+                                      <label for="eventManagerQuote" class="flex-grow cursor-pointer font-semibold" style="color: var(--color-text-strong);">אני מעוניין בהצעת מחיר לניהול אירוע מלא</label>
+                                      <input type="checkbox" id="eventManagerQuote" class="h-6 w-6 rounded" style="accent-color: var(--color-primary)" ${isChecked}>
+                                  </div>`;
+              } else {
+                content += `<div class="grid grid-cols-1 md:grid-cols-2 gap-4">`;
+                group.itemIds.forEach((itemId) => {
+                  const item = appSettings.items[itemId];
+                  const existingItem = orderObject.items.find(
+                    (i) => i.itemId === itemId
+                  );
+
+                  if (item.pricePerPerson) {
+                    const isSelected = !!existingItem;
+                    content += `
+                                <div class="p-4 flex justify-between items-center card cursor-pointer per-person-extra ${isSelected ? 'selected' : ''}" data-item-id="${itemId}">
+                                    <div>
+                                        <p class="font-bold" style="color: var(--color-text-strong);">${item.name}</p>
+                                        <p class="text-lg font-semibold" style="color: var(--color-primary);">+${item.extraCost} ₪ <span class="text-sm font-normal" style="color: var(--color-text-muted);">לאדם</span></p>
+                                    </div>
+                                    <div class="h-8 w-8 rounded-full flex items-center justify-center text-white" style="background-color: ${isSelected ? 'var(--color-primary)' : 'var(--color-border)'};">
+                                        <svg class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
+                                    </div>
+                                </div>
+                            `;
+                  } else {
+                    const currentQty = existingItem ? existingItem.quantity : 0;
+                    content += `
+                                        <div class="p-4 flex justify-between items-center card">
+                                            <div>
+                                                <p class="font-bold" style="color: var(--color-text-strong);">${item.name}</p>
+                                                <p class="text-lg font-semibold" style="color: var(--color-primary);">${item.extraCost} ₪</p>
+                                            </div>
+                                            <div class="flex items-center gap-2">
+                                                <button class="!p-1 extra-btn h-8 w-8 rounded-full text-lg font-bold text-white flex-shrink-0 flex items-center justify-center" style="background-color: var(--color-primary);" data-item-id="${itemId}" data-change="1">
+                                                <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path fill-rule="evenodd" clip-rule="evenodd" d="M12 5C12.5523 5 13 5.44772 13 6V11H18C18.5523 11 19 11.4477 19 12C19 12.5523 18.5523 13 18 13H13V18C13 18.5523 12.5523 19 12 19C11.4477 19 11 18.5523 11 18V13H6C5.44772 13 5 12.5523 5 12C5 11.4477 5.44772 11 6 11H11V6C11 5.44772 11.4477 5 12 5Z" fill="currentColor"></path>
+    </svg></button>
+                                                <span id="extra-qty-${itemId}" class="font-bold text-lg w-8 text-center">${currentQty}</span>
+                                                <button class="!p-1 extra-btn h-8 w-8 rounded-full text-lg font-bold text-white flex-shrink-0 flex items-center justify-center" style="background-color: var(--color-danger);" data-item-id="${itemId}" data-change="-1">
+                                                <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path fill-rule="evenodd" clip-rule="evenodd" d="M5 12C5 11.4477 5.44772 11 6 11H18C18.5523 11 19 11.4477 19 12C19 12.5523 18.5523 13 18 13H6C5.44772 13 5 12.5523 5 12Z" fill="currentColor"></path>
+    </svg>
+                                                </button>
+                                            </div>
+                                        </div>
+                                   `;
+                  }
+                });
+                content += `</div>`;
+              }
+            });
+
+            content += `</section>`;
+          }
+        }
+        container.innerHTML = content;
+
+        // Add event listeners after rendering
+        if (isPackageSelected) {
+          const changePackageBtn =
+            document.getElementById("change-package-btn");
+          if (changePackageBtn)
+            changePackageBtn.addEventListener("click", handleBack);
+
+          screens.orderForm
+            .querySelectorAll(".quantity-selector button")
+            .forEach((btn) =>
+              btn.addEventListener("click", handleQuantityChange)
+            );
+
+          const numberOfPeopleInput =
+            screens.orderForm.querySelector("#numberOfPeople");
+          if (numberOfPeopleInput)
+            numberOfPeopleInput.addEventListener(
+              "change",
+              handleQuantityInputChange
+            );
+
+          screens.orderForm
+            .querySelectorAll(".item-card")
+            .forEach((card) =>
+              card.addEventListener("click", handleItemSelect)
+            );
+          screens.orderForm
+            .querySelectorAll(".choice-card")
+            .forEach((card) =>
+              card.addEventListener("click", handleShabbatChoiceSelect)
+            );
+          screens.orderForm
+            .querySelectorAll(".extra-btn")
+            .forEach((btn) =>
+              btn.addEventListener("click", handleOptionalExtraChange)
+            );
+          screens.orderForm
+            .querySelectorAll(".per-person-extra")
+            .forEach((card) =>
+              card.addEventListener("click", handlePerPersonExtraToggle)
+            );
+          screens.orderForm
+            .querySelectorAll(".btn-reset")
+            .forEach((btn) =>
+              btn.addEventListener("click", handleResetCategory)
+            );
+
+          const eventManagerQuoteCheckbox = container.querySelector("#eventManagerQuote");
+          if (eventManagerQuoteCheckbox) {
+            eventManagerQuoteCheckbox.addEventListener('change', (e) => {
+              orderObject.customer.wantsQuote = e.target.checked;
+              saveOrder();
+            });
+          }
+
+          updateAllCounters();
+          setupScrollSpy();
+        } else {
+          screens.orderForm
+            .querySelectorAll("[data-pkg-id]")
+            .forEach((card) =>
+              card.addEventListener("click", handlePackageSelect)
+            );
+        }
+      }
+
+      function renderCategory(catId, meal) {
+        const category = appSettings.categories[catId];
+        const safeMealName = sanitizeForId(meal.name);
+        let categoryHtml = `
+                        <section class="p-6 mb-4 card" id="category-section-${safeMealName}-${catId}">
+                            <div class="flex justify-between items-center mb-4">
+                                <h4 class="text-lg font-semibold" style="color: var(--color-text-strong);">${category.name
+          }</h4>
+                                <div class="flex items-center gap-2">
+                                    <span id="counter-${safeMealName}-${catId}" class="text-sm font-medium px-3 py-1 rounded-full" style="background-color: var(--color-border); color: var(--color-text-muted);">בחירה: 0 / ${category.selectionLimit
+          }</span>
+                                    <button id="reset-btn-${safeMealName}-${catId}" class="btn-reset hidden" data-meal-name="${meal.name
+          }" data-cat-id="${catId}">איפוס</button>
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                ${category.itemIds
+            .map((itemId) => {
+              const item = appSettings.items[itemId];
+              let imageContent = '';
+              const imageUrl = item.imageUrl || category.imageUrl;
+              if (imageUrl) {
+                imageContent = `<img src="${imageUrl}" alt="${item.name}" class="item-image">`;
+              } else {
+                imageContent = `<span class="text-xl">${category.emoji || '🍽️'}</span>`;
+              }
+              return `<div class="item-card" data-item-id="${itemId}" data-cat-id="${catId}" data-meal-name="${meal.name}"><div class="item-card-icon">${imageContent}</div><p class="font-semibold text-right" style="color: var(--color-text-strong);">${item.name}</p></div>`;
+            })
+            .join("")}
+                            </div>
+                        </section>
+                    `;
+        return categoryHtml;
+      }
+
+      function renderStickyNav(pkg) {
+        navLinksContainer.innerHTML = "";
+
+        // Add "Package" link
+        const packageLink = document.createElement("a");
+        packageLink.href = `#package-selection-section`;
+        packageLink.className = "nav-link whitespace-nowrap";
+        packageLink.textContent = "החבילה";
+        navLinksContainer.appendChild(packageLink);
+
+        // Iterate through meals to generate links
+        pkg.meals.forEach(meal => {
+          const safeMealName = sanitizeForId(meal.name);
+
+          if (meal.hasChoice) {
+            // For meals with a choice (like Shabbat morning), create a single link for the whole meal section.
+            const link = document.createElement("a");
+            link.href = `#meal-section-${safeMealName}`;
+            link.className = "nav-link whitespace-nowrap";
+            link.textContent = meal.name;
+            navLinksContainer.appendChild(link);
+          } else {
+            // For regular meals, create a link for each category inside it.
+            meal.categoryIds.forEach(catId => {
+              const category = appSettings.categories[catId];
+              if (category) {
+                const sectionId = `category-section-${safeMealName}-${catId}`;
+                const link = document.createElement("a");
+                link.href = `#${sectionId}`;
+                link.className = "nav-link whitespace-nowrap";
+                // Shorten long names for a cleaner nav
+                if (category.name.includes("לחמניות")) {
+                  link.textContent = "לחמניות";
+                } else {
+                  link.textContent = category.name.replace(/<[^>]*>/g, ''); // Remove HTML tags for nav display
+                }
+                navLinksContainer.appendChild(link);
+              }
+            });
+          }
+        });
+
+        const extrasCat = appSettings.categories["cat_extras"];
+        if (extrasCat && extrasCat.groups.length > 0) {
+          const link = document.createElement("a");
+          link.href = `#category-section-extras`;
+          link.className = "nav-link whitespace-nowrap";
+          link.textContent = "פינוקים";
+          navLinksContainer.appendChild(link);
+        }
+
+        navLinksContainer.querySelectorAll(".nav-link").forEach((link) => {
+          link.addEventListener("click", (e) => {
+            e.preventDefault();
+            const targetId = e.currentTarget.getAttribute("href").substring(1);
+            const targetElement = document.getElementById(targetId);
+            if (targetElement) {
+              const offset = 100; // The desired top offset in pixels
+              const elementPosition = targetElement.getBoundingClientRect().top;
+              const offsetPosition = elementPosition + window.pageYOffset - offset;
+
+              window.scrollTo({
+                top: offsetPosition,
+                behavior: 'smooth'
+              });
+            }
+          });
+        });
+      }
+
+      async function handleSubmitOrder(submitBtn) { // Accept the button as an argument
+        const checkoutForm = document.getElementById("checkout-form");
+        const errorEl = document.getElementById('checkout-error');
+        errorEl.classList.add('hidden'); // Hide previous errors
+
+        // Manually trigger browser validation for visible required fields (name, phone)
+        if (!checkoutForm.checkValidity()) {
+          checkoutForm.reportValidity();
+          return;
+        }
+
+        // Manually validate our custom date logic
+        if (!orderObject.customer.eventDate) {
+          errorEl.textContent = 'אנא בחרו תאריך לאירוע.';
+          errorEl.classList.remove('hidden');
+          const dateLabel = document.querySelector('label[for="eventDate"]') || document.querySelector('#date-options-container');
+          if (dateLabel) {
+            dateLabel.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+          return; // Stop submission
+        }
+        
+        // הגנת שרת צד לקוח: וידוא מינימום לפני שליחה
+        const reqMin = getRequiredMinPortions();
+        if (orderObject.summary.peopleCount < reqMin) {
+          errorEl.textContent = `לתאריך הנבחר נדרש מינימום של ${reqMin} מנות. אנא חזרו למסך הקודם לעדכון הכמות.`;
+          errorEl.classList.remove('hidden');
+          return; // Stop submission
+        }
+
+        // const submitBtn = document.getElementById('submit-order-btn'); // This line is no longer needed
+        const submitText = submitBtn.querySelector('.submit-text');
+        const spinner = submitBtn.querySelector('.spinner');
+
+        // Show spinner and disable button
+        submitBtn.disabled = true;
+        submitText.classList.add('hidden');
+        spinner.classList.remove('hidden');
+
+        orderObject.summary.createdDate = new Date().toLocaleString(
+          "he-IL"
+        );
+
+        // Create a temporary object to send, including the WhatsApp summary.
+        const dataToSend = {
+          ...orderObject,
+          whatsappSummary: generateSummaryText() // Generate and add the summary text
+        };
+
+        console.log("--- Preparing to send order ---");
+        console.log(JSON.stringify(dataToSend, null, 2));
+
+        try {
+          // Check if the security nonce object exists (created by the PHP shortcode)
+          if (typeof agada_ajax_obj === 'undefined' || !agada_ajax_obj.nonce) {
+            throw new Error('Security object (agada_ajax_obj) is missing. Make sure to include the main shortcode on the page.');
+          }
+
+          // We use FormData to send data in a way WordPress understands easily.
+          const formData = new FormData();
+          formData.append('action', 'submit_agada_order');
+          formData.append('security', agada_ajax_obj.nonce);
+          formData.append('order_data', JSON.stringify(dataToSend));
+
+          const response = await fetch(agada_ajax_obj.ajax_url, {
+            method: 'POST',
+            body: formData // No need for Content-Type header; browser sets it automatically
+          });
+
+          if (!response.ok) {
+            throw new Error(`Network response was not ok, status: ${response.status}`);
+          }
+
+          const result = await response.json();
+          console.log('Server response:', result);
+
+          if (!result.success) {
+            throw new Error(result.data?.message || 'Server returned an error.');
+          }
+
+          showSummaryScreen(true);
+          clearSavedOrder();
+
+        } catch (error) {
+          console.error('Failed to submit order:', error);
+          showSummaryScreen(false);
+        } finally {
+          // Hide spinner and re-enable button
+          submitBtn.disabled = false;
+          submitText.classList.remove('hidden');
+          spinner.classList.add('hidden');
+        }
+      }
+
+      // UX Helper functions to display minimum warning
+      function showMinQtyWarning(min) {
+          const warning = document.getElementById("min-qty-warning");
+          if(warning) {
+              warning.textContent = `שימו לב: המינימום להזמנה הוא ${min} מנות.`;
+              warning.classList.remove("hidden");
+              // מסתיר את ההודעה אוטומטית אחרי 3 שניות
+              setTimeout(() => { warning.classList.add("hidden"); }, 3000);
+          }
+      }
+
+      function hideMinQtyWarning() {
+          const warning = document.getElementById("min-qty-warning");
+          if(warning) warning.classList.add("hidden");
+      }
+
+      function handleQuantityChange(event) {
+        const change = parseInt(event.currentTarget.dataset.change);
+        const input = document.getElementById("numberOfPeople");
+        if (!input) return;
+        let currentValue = parseInt(input.value);
+        let newValue = currentValue + change;
+        const minAllowed = getRequiredMinPortions(); 
+        
+        if (newValue < minAllowed) {
+          newValue = minAllowed;
+          showMinQtyWarning(minAllowed); // Alert the user
+        } else {
+          hideMinQtyWarning();
+        }
+
+        input.value = newValue;
+        orderObject.summary.peopleCount = newValue;
+        calculatePrice();
+      }
+
+      function handleQuantityInputChange(event) {
+        let newValue = parseInt(event.currentTarget.value);
+        const minAllowed = getRequiredMinPortions();
+
+        if (isNaN(newValue) || newValue < minAllowed) {
+          newValue = minAllowed;
+          event.currentTarget.value = newValue;
+          showMinQtyWarning(minAllowed); // Alert the user
+        } else {
+          hideMinQtyWarning();
+        }
+
+        orderObject.summary.peopleCount = newValue;
+        calculatePrice();
+      }
+
+      function handlePerPersonExtraToggle(event) {
+        const card = event.currentTarget;
+        const { itemId } = card.dataset;
+        const itemInfo = appSettings.items[itemId];
+        const existingItemIndex = orderObject.items.findIndex(
+          (i) => i.itemId === itemId
+        );
+
+        if (existingItemIndex > -1) {
+          // Item exists, so remove it
+          orderObject.items.splice(existingItemIndex, 1);
+        } else {
+          // Item doesn't exist, so add it
+          orderObject.items.push({
+            itemId,
+            itemName: itemInfo.name,
+            isExtra: true,
+            quantity: 1, // Quantity is 1 for toggles
+            pricePerUnit: itemInfo.extraCost,
+          });
+        }
+
+        // Toggle UI
+        card.classList.toggle('selected');
+        const checkmarkDiv = card.querySelector('div:last-child');
+        const isSelected = card.classList.contains('selected');
+        checkmarkDiv.style.backgroundColor = isSelected ? 'var(--color-primary)' : 'var(--color-border)';
+
+        calculatePrice();
+        saveOrder();
+      }
+
+      function handleShabbatChoiceSelect(event) {
+        const card = event.currentTarget;
+        const { choiceId, mealName } = card.dataset;
+
+        orderObject.selections.shabbatMorningChoice = choiceId;
+
+        // Find meal and options from settings
+        const pkg = appSettings.packages[orderObject.summary.packageId];
+        const meal = pkg.meals.find(m => m.name === mealName);
+        const selectedOption = meal.options.find(opt => opt.id === choiceId);
+        const otherOption = meal.options.find(opt => opt.id !== choiceId);
+
+        // 1. Remove items from the OTHER choice
+        const itemsToRemove = new Set();
+        if (otherOption) {
+          // Add predefined items to removal set
+          otherOption.itemIdsToAdd.forEach(id => itemsToRemove.add(id));
+          // Add items from categories to removal set
+          otherOption.categoryIds.forEach(catId => {
+            const category = appSettings.categories[catId];
+            orderObject.items.forEach(item => {
+              if (item.categoryName === category.name && item.mealName === mealName) {
+                itemsToRemove.add(item.itemId);
+              }
+            });
+          });
+        }
+
+        orderObject.items = orderObject.items.filter(item => !itemsToRemove.has(item.itemId));
+
+        // 2. Add predefined items for the NEW choice
+        if (selectedOption) {
+          selectedOption.itemIdsToAdd.forEach(itemId => {
+            // Avoid duplicates
+            if (!orderObject.items.some(i => i.itemId === itemId)) {
+              const item = appSettings.items[itemId];
+              orderObject.items.push({
+                itemId,
+                itemName: item.name,
+                mealName,
+                categoryName: "סעודת שבת בבוקר", // Assign a generic category name
+              });
+            }
+          });
+        }
+
+        renderOrderForm(); // Re-render the entire form to show/hide sections
+        saveOrder();
+        calculatePrice();
+      }
+
+      function handleItemSelect(event) {
+        const card = event.currentTarget;
+        const { itemId, catId, mealName } = card.dataset;
+        const category = appSettings.categories[catId];
+        const item = appSettings.items[itemId];
+        const itemIndexInOrder = orderObject.items.findIndex(
+          (i) => i.itemId === itemId && i.mealName === mealName
+        );
+
+        if (itemIndexInOrder > -1) {
+          orderObject.items.splice(itemIndexInOrder, 1);
+        } else {
+          const currentSelectionCount = orderObject.items.filter(
+            (i) => i.categoryName === category.name && i.mealName === mealName
+          ).length;
+          if (currentSelectionCount < category.selectionLimit) {
+            orderObject.items.push({
+              itemId,
+              itemName: item.name,
+              mealName,
+              categoryName: category.name,
+            });
+          } else {
+            // Do not show alert, just prevent selection
+            console.warn(`Selection limit of ${category.selectionLimit} reached for ${category.name}.`);
+          }
+        }
+        updateCategoryUI(mealName, catId);
+        saveOrder();
+        calculatePrice();
+      }
+
+      function handleResetCategory(event) {
+        const btn = event.currentTarget;
+        const { catId, mealName } = btn.dataset;
+
+        orderObject.items = orderObject.items.filter(
+          (item) =>
+            !(
+              item.mealName === mealName &&
+              item.categoryName === appSettings.categories[catId].name
+            )
+        );
+
+        updateCategoryUI(mealName, catId);
+        saveOrder();
+        calculatePrice();
+      }
+
+      function handleOptionalExtraChange(event) {
+        const btn = event.currentTarget;
+        const { itemId, change } = btn.dataset;
+        const itemInfo = appSettings.items[itemId];
+        const existingItemIndex = orderObject.items.findIndex(
+          (i) => i.itemId === itemId
+        );
+        let currentQty =
+          existingItemIndex > -1
+            ? orderObject.items[existingItemIndex].quantity
+            : 0;
+        const newQty = Math.max(0, currentQty + parseInt(change));
+        if (newQty > 0) {
+          if (existingItemIndex > -1) {
+            orderObject.items[existingItemIndex].quantity = newQty;
+          } else {
+            orderObject.items.push({
+              itemId,
+              itemName: itemInfo.name,
+              isExtra: true,
+              quantity: newQty,
+              pricePerUnit: itemInfo.extraCost,
+            });
+          }
+        } else if (existingItemIndex > -1) {
+          orderObject.items.splice(existingItemIndex, 1);
+        }
+        const qtyEl = document.getElementById(`extra-qty-${itemId}`);
+        if (qtyEl) qtyEl.textContent = newQty;
+        calculatePrice();
+      }
+
+      function updateCategoryUI(mealName, catId) {
+        const category = appSettings.categories[catId];
+        const limit = category.selectionLimit;
+        const count = orderObject.items.filter(
+          (i) => i.categoryName === category.name && i.mealName === mealName
+        ).length;
+
+        const safeMealName = sanitizeForId(mealName);
+        const container = document.getElementById(
+          `category-section-${safeMealName}-${catId}`
+        );
+        if (!container) return;
+
+        const counter = container.querySelector(
+          `#counter-${safeMealName}-${catId}`
+        );
+        const resetBtn = container.querySelector(
+          `#reset-btn-${safeMealName}-${catId}`
+        );
+        const itemCards = container.querySelectorAll(".item-card");
+
+        if (counter) {
+          counter.textContent = `בחירה: ${count} / ${limit}`;
+          counter.style.backgroundColor =
+            count >= limit ? "var(--color-primary)" : "var(--color-border)";
+          counter.style.color =
+            count >= limit
+              ? "var(--color-text-on-primary)"
+              : "var(--color-text-muted)";
+          counter.classList.toggle("hidden", count === limit);
+        }
+
+        if (resetBtn) {
+          resetBtn.classList.toggle("hidden", count === 0);
+        }
+
+        itemCards.forEach((card) => {
+          const itemId = card.dataset.itemId;
+          const isSelected = orderObject.items.some(
+            (i) => i.itemId === itemId && i.mealName === mealName
+          );
+          card.classList.toggle("selected", isSelected);
+
+          if (count >= limit && !isSelected) {
+            card.classList.add("opacity-50", "pointer-events-none");
+          } else {
+            card.classList.remove("opacity-50", "pointer-events-none");
+          }
+        });
+      }
+
+      function updateAllCounters() {
+        const pkg = appSettings.packages[orderObject.summary.packageId];
+        if (!pkg) return;
+        pkg.meals.forEach((meal) => {
+          if (meal.hasChoice) {
+            const choice = orderObject.selections.shabbatMorningChoice;
+            const selectedOption = meal.options.find(opt => opt.id === choice);
+            if (selectedOption) {
+              selectedOption.categoryIds.forEach(catId => updateCategoryUI(meal.name, catId));
+            }
+          } else {
+            meal.categoryIds.forEach((catId) => {
+              updateCategoryUI(meal.name, catId);
+            });
+          }
+        });
+      }
+
+      function generateDateOptions() {
+        const options = [];
+        const today = new Date();
+        const dayNames = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
+
+        for (let i = 1; i <= 7; i++) {
+          const date = new Date(today);
+          date.setDate(today.getDate() + i);
+
+          const day = date.getDate();
+          const month = date.getMonth() + 1;
+          const year = date.getFullYear();
+          const dayName = dayNames[date.getDay()];
+
+          const display = `${dayName} ${day}/${month}`;
+          const value = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+
+          options.push({ display, value });
+        }
+        return options;
+      }
+
+      function renderCheckoutScreen() {
+        document.getElementById("fullName").value = orderObject.customer.name || "";
+        document.getElementById("phone").value = orderObject.customer.phone || "";
+        document.getElementById("address").value = orderObject.customer.address || "";
+        document.getElementById("notes").value = orderObject.customer.notes || "";
+        // document.getElementById("eventManagerQuote").checked = orderObject.customer.wantsQuote;
+
+        const dateOptionsContainer = document.getElementById('date-options-container');
+        const eventDateInput = document.getElementById('eventDate');
+        const dateOptions = generateDateOptions();
+
+        let buttonsHtml = dateOptions.map(opt =>
+          `<button type="button" class="date-choice-btn" data-value="${opt.value}">${opt.display}</button>`
+        ).join('');
+        buttonsHtml += `<button type="button" class="date-choice-btn" data-value="other">אחר</button>`;
+        dateOptionsContainer.innerHTML = buttonsHtml;
+
+        const dateButtons = dateOptionsContainer.querySelectorAll('.date-choice-btn');
+
+        const handleDateSelectionUI = () => {
+          const currentDate = orderObject.customer.eventDate;
+          let isOptionSelected = false;
+
+          dateButtons.forEach(btn => {
+            const btnValue = btn.dataset.value;
+            if (btnValue !== 'other' && btnValue === currentDate) {
+              btn.classList.add('selected');
+              isOptionSelected = true;
+            } else {
+              btn.classList.remove('selected');
+            }
+          });
+
+          const otherButton = dateOptionsContainer.querySelector('[data-value="other"]');
+          if (currentDate && !isOptionSelected) {
+            otherButton.classList.add('selected');
+            eventDateInput.value = currentDate;
+            eventDateInput.classList.remove('hidden');
+          } else {
+            otherButton.classList.remove('selected');
+            eventDateInput.classList.add('hidden');
+          }
+          
+          // עדכון העגלה הצידית ברגע שהתאריך משתנה - במידה וצריך לחסום את המשתמש
+          updateSideCart(); 
+        };
+
+        dateButtons.forEach(button => {
+          button.addEventListener('click', () => {
+            const value = button.dataset.value;
+            if (value === 'other') {
+              eventDateInput.classList.remove('hidden');
+              if (!eventDateInput.value || dateOptions.some(opt => opt.value === eventDateInput.value)) {
+                const nextWeek = new Date();
+                nextWeek.setDate(nextWeek.getDate() + 8);
+                const yyyy = nextWeek.getFullYear();
+                const mm = String(nextWeek.getMonth() + 1).padStart(2, '0');
+                const dd = String(nextWeek.getDate()).padStart(2, '0');
+                eventDateInput.value = `${yyyy}-${mm}-${dd}`;
+              }
+              orderObject.customer.eventDate = eventDateInput.value;
+            } else {
+              orderObject.customer.eventDate = value;
+            }
+            saveOrder();
+            handleDateSelectionUI();
+          });
+        });
+
+        eventDateInput.addEventListener('change', () => {
+          orderObject.customer.eventDate = eventDateInput.value;
+          saveOrder();
+          handleDateSelectionUI();
+        });
+
+        handleDateSelectionUI();
+      }
+
+      function generateSummaryText() {
+        let summary = `🎉 *סיכום הזמנה חדשה* 🎉\n`;
+        if (orderObject.summary.createdDate) {
+          summary += `_נשלחה בתאריך: ${orderObject.summary.createdDate}_\n\n`;
+        } else {
+          summary += "\n";
+        }
+
+        summary += `📦 *פרטי החבילה:*\n`;
+        summary += `• *שם החבילה:* ${orderObject.summary.packageName}\n`;
+        summary += `• *כמות מנות:* ${orderObject.summary.peopleCount}\n\n`;
+
+        summary += `👤 *פרטי הלקוח:*\n`;
+        summary += `• *שם:* ${orderObject.customer.name || "לא הוזן"}\n`;
+        summary += `• *טלפון:* ${orderObject.customer.phone || "לא הוזן"}\n`;
+        summary += `• *כתובת:* ${orderObject.customer.address || "לא הוזן"}\n`;
+        summary += `• *תאריך:* ${orderObject.customer.eventDate || "לא הוזן"
+          }\n\n`;
+
+        summary += `📋 *פירוט ההזמנה:*\n`;
+        const itemsByMeal = {};
+        const extras = [];
+
+        orderObject.items.forEach((item) => {
+          if (item.isExtra) {
+            extras.push(item);
+            return;
+          }
+          if (item.isPredefined) return; // Skip predefined items like cholent from regular listing
+
+          if (!itemsByMeal[item.mealName]) itemsByMeal[item.mealName] = {};
+          if (!itemsByMeal[item.mealName][item.categoryName]) itemsByMeal[item.mealName][item.categoryName] = [];
+          itemsByMeal[item.mealName][item.categoryName].push(item.itemName);
+        });
+
+        const selectedPackage = appSettings.packages[orderObject.summary.packageId];
+        selectedPackage.meals.forEach(meal => {
+          summary += `\n🍽️ *${meal.name}*\n`;
+          if (meal.hasChoice) {
+            const choiceId = orderObject.selections.shabbatMorningChoice;
+            const choice = meal.options.find(o => o.id === choiceId);
+            if (choice) {
+              summary += `*בחירה:* ${choice.name}\n`;
+              if (itemsByMeal[meal.name]) {
+                Object.entries(itemsByMeal[meal.name]).forEach(([catName, items]) => {
+                  const category = Object.values(appSettings.categories).find(c => c.name === catName);
+                  summary += `*${category.emoji} ${catName}:*\n`;
+                  items.forEach(itemName => summary += `  • ${itemName}\n`);
+                });
+              }
+            }
+          } else {
+            if (itemsByMeal[meal.name]) {
+              Object.entries(itemsByMeal[meal.name]).forEach(([catName, items]) => {
+                const category = Object.values(appSettings.categories).find(c => c.name === catName);
+                summary += `*${category.emoji} ${catName}:*\n`;
+                items.forEach(itemName => summary += `  • ${itemName}\n`);
+              });
+            }
+          }
+        });
+
+
+        if (extras.length > 0) {
+          const extrasCat = appSettings.categories["cat_extras"];
+          summary += `\n${extrasCat.emoji} *${extrasCat.name}:*\n`;
+          extras.forEach((item) => {
+            const itemInfo = appSettings.items[item.itemId];
+            if (itemInfo.pricePerPerson) {
+              summary += `  • ${item.itemName}\n`;
+            } else {
+              summary += `  • ${item.itemName} (x${item.quantity})\n`;
+            }
+          });
+          summary += "\n";
+        }
+
+        if (orderObject.customer.notes) {
+          summary += `\n📝 *הערות:*\n${orderObject.customer.notes}\n\n`;
+        }
+
+        if (orderObject.customer.wantsQuote) {
+          summary += `*✓ מעוניין בהצעת מחיר לניהול אירוע מלא.*\n\n`;
+        }
+
+        summary += `💰 *סה"כ לתשלום:* ${orderObject.summary.totalPrice.toLocaleString()} ₪\n\n`;
+        summary += `תודה שבחרתם באגדה! ניצור קשר בהקדם לאישור סופי.`;
+        return summary;
+      }
+
+      function renderFriendlySummary() {
+        const summaryEl = document.getElementById("friendly-summary");
+        if (summaryEl) {
+          summaryEl.textContent = generateSummaryText().replace(/\*/g, "").replace(/<[^>]*>/g, '');
+        }
+      }
+
+      function showSummaryScreen(isSuccess) {
+        const successIcon = document.getElementById('summary-icon-success');
+        const errorIcon = document.getElementById('summary-icon-error');
+        const title = document.getElementById('summary-title');
+        const subtitle = document.getElementById('summary-subtitle');
+
+        if (isSuccess) {
+          successIcon.classList.remove('hidden');
+          errorIcon.classList.add('hidden');
+          title.textContent = 'ההזמנה התקבלה בהצלחה!';
+          title.style.color = 'var(--color-text-strong)';
+          subtitle.textContent = 'תודה שבחרתם בקייטרינג אגדה! נציג יחזור אליכם בהקדם לאישור סופי. זהו סיכום ההזמנה שלכם:';
+        } else {
+          successIcon.classList.add('hidden');
+          errorIcon.classList.remove('hidden');
+          title.textContent = 'אירעה תקלה בשליחה';
+          title.style.color = 'var(--color-danger)';
+          subtitle.innerHTML = `ההזמנה נשמרה אך לא נשלחה אלינו.<br>אנא שתפו את הסיכום ב-WhatsApp וצרו עמנו קשר.`;
+        }
+
+        renderFriendlySummary();
+        navigateTo("summary");
+      }
+
+      function setupScrollSpy() {
+        const sections = document.querySelectorAll("#screen-order-form section[id]");
+        const navLinks = document.querySelectorAll("#nav-links-container a");
+        if (!sections.length || !navLinks.length) return;
+
+        const observer = new IntersectionObserver(
+          (entries) => {
+            entries.forEach((entry) => {
+              const link = navLinksContainer.querySelector(`a[href="#${entry.target.id}"]`);
+              if (link && entry.isIntersecting) {
+                navLinks.forEach(l => l.classList.remove('active'));
+                link.classList.add('active');
+              }
+            });
+          },
+          {
+            // This creates a "tripwire" 100px from the top of the viewport.
+            // An intersection is triggered only when a section's top edge crosses this line.
+            rootMargin: "-100px 0px -85% 0px",
+          }
+        );
+
+        sections.forEach((section) => {
+          observer.observe(section);
+        });
+      }
+
+      function init() {
+        // Auto-set initial theme based on system preference
+        const appContainer = document.getElementById('agada-order-app');
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+          if (appContainer) {
+            appContainer.classList.add('dark');
+          }
+        }
+
+        const checkoutForm = document.getElementById("checkout-form");
+        if (checkoutForm) {
+          checkoutForm.addEventListener("input", (e) => {
+            const { id, value, type, checked } = e.target;
+            if (id === "fullName") {
+              orderObject.customer.name = value;
+            } else if (orderObject.customer.hasOwnProperty(id)) {
+              orderObject.customer[id] = value;
+            }
+            // The eventManagerQuote logic is now handled in the order form screen
+            saveOrder();
+          });
+        }
+
+        const copyBtn = document.getElementById("copy-summary-btn");
+        if (copyBtn) {
+          copyBtn.addEventListener("click", () => {
+            const text = generateSummaryText();
+            try {
+              const textArea = document.createElement("textarea");
+              textArea.style.position = "fixed";
+              textArea.style.top = "-9999px";
+              textArea.value = text;
+              document.body.appendChild(textArea);
+              textArea.focus();
+              textArea.select();
+              document.execCommand("copy");
+              document.body.removeChild(textArea);
+              // Simple feedback without alert
+              const originalText = copyBtn.querySelector('span').textContent;
+              copyBtn.querySelector('span').textContent = 'הועתק!';
+              setTimeout(() => {
+                copyBtn.querySelector('span').textContent = originalText;
+              }, 2000);
+            } catch (e) {
+              console.error("Failed to copy text: ", e);
+            }
+          });
+        }
+
+        const whatsappBtn = document.getElementById("whatsapp-share-btn");
+        if (whatsappBtn) {
+          whatsappBtn.addEventListener("click", (e) => {
+            e.preventDefault(); // Prevent the default link behavior
+            const summaryText = generateSummaryText();
+            const restaurantNumber = '972552239120';
+
+            // This creates a direct link to the restaurant's number with the pre-filled message
+            const whatsappUrl = `https://wa.me/${restaurantNumber}?text=${encodeURIComponent(summaryText)}`;
+
+            // Open the link in a new tab
+            window.open(whatsappUrl, '_blank');
+          });
+        }
+
+        const themeToggle = document.getElementById("theme-toggle");
+        if (themeToggle) {
+          themeToggle.addEventListener("click", () => {
+            const appContainer = document.getElementById('agada-order-app');
+            if (appContainer) {
+              appContainer.classList.toggle("dark");
+            }
+          });
+        }
+
+        // Back button event listener is moved to updateSideCart as the button is rendered dynamically
+
+        const newOrderBtn = document.getElementById("new-order-btn");
+        if (newOrderBtn) {
+          newOrderBtn.addEventListener("click", () => {
+            orderObject = JSON.parse(JSON.stringify(initialOrder));
+            clearSavedOrder();
+            renderOrderForm();
+            navigateTo("orderForm");
+          });
+        }
+
+        renderOrderForm(); // Start with the main order form
+        navigateTo("orderForm");
+        updateSideCart();
+
+        const savedOrderJSON = localStorage.getItem(LOCAL_STORAGE_KEY);
+        if (savedOrderJSON) {
+          resumeModal.classList.remove("hidden");
+        }
+
+        const resumeYesBtn = document.getElementById("resume-yes-btn");
+        if (resumeYesBtn) {
+          resumeYesBtn.addEventListener("click", () => {
+            orderObject = JSON.parse(savedOrderJSON);
+            if (!orderObject.selections) { // Backwards compatibility for old saved orders
+              orderObject.selections = { shabbatMorningChoice: null };
+            }
+            
+            // הגנת מינימום גם בשחזור הזמנה קודמת לפי התאריך שנבחר בעבר! 
+            const reqMin = getRequiredMinPortions();
+            if(orderObject.summary.peopleCount < reqMin) {
+               orderObject.summary.peopleCount = reqMin;
+               saveOrder();
+            }
+
+            resumeModal.classList.add("hidden");
+            renderOrderForm();
+            navigateTo("orderForm");
+          });
+        }
+
+        const resumeNoBtn = document.getElementById("resume-no-btn");
+        if (resumeNoBtn) {
+          resumeNoBtn.addEventListener("click", () => {
+            clearSavedOrder();
+            resumeModal.classList.add("hidden");
+          });
+        }
+
+        const mobileTrigger = document.getElementById("mobile-summary-trigger");
+        const mobileSummaryOverlay = document.getElementById("mobile-summary-overlay");
+        const mobileSummaryCloseBtn = document.getElementById("mobile-summary-close-btn");
+
+        if (mobileTrigger) {
+          mobileTrigger.addEventListener("click", () => toggleMobileSummary(true));
+        }
+
+        if (mobileSummaryModal) {
+          // Use simple click listeners for closing
+          mobileSummaryOverlay.addEventListener('click', () => toggleMobileSummary(false));
+          mobileSummaryCloseBtn.addEventListener('click', () => toggleMobileSummary(false));
+        }
+      }
+
+      init();
+    });
+  </script>
+</body>
+
+</html>

@@ -1,0 +1,7 @@
+{
+  "source": "WordPress/agent-skills",
+  "sourceType": "git",
+  "repoUrl": "https://github.com/WordPress/agent-skills",
+  "subpath": "skills/wp-block-themes",
+  "installedAt": "2026-04-05T04:39:34.236Z"
+}
