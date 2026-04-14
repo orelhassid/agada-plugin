@@ -1,0 +1,84 @@
+{
+    "status": "ok",
+    "brand": {
+        "domain": "agada-c.co.il",
+        "title": "Agada",
+        "description": "Agada Catering is a premium, fully kosher (mehadrin) catering service led by Chef Gabriel \"Gur\" Kamiyabi. Based in Israel, the company supplies gourmet menus for weddings, bar/bat mitzvahs, shabbat meals, corporate events and other celebrations. With the strictest health‑ ministry licensing, Agada sources high‑quality ingredients and offers a range of packages—fish‑focused, meat‑focused, combined, and full‑shabbat meals—each featuring fresh salads, handcrafted breads, and optional wine. Nationwide delivery ensures clients receive restaurant‑level cuisine wherever they are. The team emphasizes personalized service, meticulous presentation, and a culinary experience that turns every event into a memorable “legend.”",
+        "slogan": "הופכים כל חגיגה לאגדה – קייטרינג כשר למהדרין באירועים",
+        "colors": [
+            {
+                "hex": "#6dc049",
+                "name": "Pure Apple"
+            },
+            {
+                "hex": "#c6e077",
+                "name": "Wasabi Paste"
+            },
+            {
+                "hex": "#b6e0aa",
+                "name": "Madang"
+            }
+        ],
+        "logos": [
+            {
+                "url": "https://media.brand.dev/cb83ccba-5d48-417b-8ce0-8666aa332c24.png",
+                "mode": "dark",
+                "colors": [
+                    {
+                        "hex": "#6dc049",
+                        "name": "Pure Apple"
+                    }
+                ],
+                "resolution": {
+                    "width": 796,
+                    "height": 476,
+                    "aspect_ratio": 1.67
+                },
+                "type": "logo"
+            },
+            {
+                "url": "https://media.brand.dev/c5a6d3f2-d9b7-4da7-9ad0-0f436506114d.svg",
+                "mode": "dark",
+                "colors": [
+                    {
+                        "hex": "#77c34e",
+                        "name": "Conceptual"
+                    },
+                    {
+                        "hex": "#b6e0aa",
+                        "name": "Madang"
+                    }
+                ],
+                "resolution": {
+                    "width": 128,
+                    "height": 128,
+                    "aspect_ratio": 1
+                },
+                "type": "icon"
+            }
+        ],
+        "backdrops": [],
+        "socials": [],
+        "email": null,
+        "phone": null,
+        "is_nsfw": false,
+        "industries": {
+            "eic": [
+                {
+                    "industry": "Agriculture & Food",
+                    "subindustry": "Restaurants & Food Service"
+                }
+            ]
+        },
+        "links": {
+            "blog": null,
+            "careers": null,
+            "privacy": "https://www.agada-c.co.il/privacy-policy",
+            "terms": null,
+            "contact": null,
+            "pricing": null
+        },
+        "primary_language": "hebrew"
+    },
+    "code": 200
+}

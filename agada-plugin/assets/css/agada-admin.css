@@ -1,0 +1,125 @@
+/* ==========================================================================
+   Agada Admin Panel Styles
+   ========================================================================== */
+
+.agada-admin { direction: rtl; }
+
+/* Cards */
+.agada-card {
+  background: #fff;
+  border: 1px solid #e2e4e7;
+  border-radius: 8px;
+  padding: 20px 24px;
+  margin-bottom: 20px;
+}
+
+.agada-card h2 {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0 0 16px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid #56ab2f;
+  color: #1d2327;
+}
+
+.agada-card h3 {
+  font-size: 14px;
+  font-weight: 600;
+  margin: 20px 0 8px;
+  color: #2c3338;
+}
+
+/* Order single layout */
+.agada-order-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.agada-card-wide {
+  grid-column: 1 / -1;
+}
+
+/* Detail table */
+.agada-detail-table { width: 100%; border-collapse: collapse; }
+.agada-detail-table th {
+  text-align: right;
+  padding: 6px 12px 6px 0;
+  color: #666;
+  font-weight: 500;
+  width: 130px;
+  vertical-align: top;
+}
+.agada-detail-table td {
+  padding: 6px 0;
+  color: #1d2327;
+}
+.agada-total {
+  font-size: 20px;
+  font-weight: 700;
+  color: #56ab2f;
+}
+
+/* Orders table */
+.agada-orders-table th,
+.agada-orders-table td { text-align: right; }
+
+/* Status badges */
+.agada-status-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.agada-status-pending {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.agada-status-confirmed {
+  background: #d1f3d1;
+  color: #155724;
+}
+
+.agada-status-cancelled {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+/* WhatsApp summary pre */
+.agada-whatsapp-summary {
+  background: #f0f9eb;
+  padding: 16px;
+  border-radius: 8px;
+  white-space: pre-wrap;
+  font-family: Arial, sans-serif;
+  font-size: 13px;
+  color: #333;
+  direction: rtl;
+  text-align: right;
+  margin-bottom: 12px;
+}
+
+/* Repeater rows */
+.agada-repeater-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+
+.agada-notice-row { flex-direction: column; align-items: flex-start; }
+.agada-notice-row > * { width: 100%; }
+
+.agada-date-range {
+  display: flex;
+  gap: 12px;
+}
+
+@media (max-width: 782px) {
+  .agada-order-grid { grid-template-columns: 1fr; }
+}
